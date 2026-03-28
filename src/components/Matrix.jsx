@@ -39,7 +39,7 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
               borderBottom: `1.5px solid ${T.border}`,
               fontSize: mobile ? 9 : 10, color: T.muted,
             }}>
-              <span style={{ fontSize: mobile ? 10 : 11 }}>🏪</span>
+              <span style={{ fontSize: mobile ? 12 : 16 }}>🏪</span>
             </th>
             {timeslots.map((ts) => (
               <th key={ts.id} style={{

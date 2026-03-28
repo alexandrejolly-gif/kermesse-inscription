@@ -102,6 +102,10 @@ export const iconBtn = (mobile) => ({
 
 /* ─── VALIDATION ─── */
 export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+export const isPhone = (v) => {
+  const cleaned = v.replace(/\s/g, ''); // Enlever les espaces
+  return /^0[1-9]\d{8}$/.test(cleaned); // Format: 0X suivi de 8 chiffres (total 10)
+};
 
 /* ─── UID ─── */
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);

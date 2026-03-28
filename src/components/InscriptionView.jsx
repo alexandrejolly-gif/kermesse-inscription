@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { supabase } from "../lib/supabase";
-import { T, C, btn, uid, isEmail, useResponsive } from "../styles/theme";
+import { T, C, btn, uid, isEmail, isPhone, useResponsive } from "../styles/theme";
 import IdentityForm from "./IdentityForm";
 import Matrix from "./Matrix";
 import MyRecap from "./MyRecap";
@@ -56,7 +56,11 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       return;
     }
     if (!isEmail(currentEmail)) {
-      showToast("❌ Email invalide");
+      showToast("❌ Email invalide (format: exemple@domaine.fr)");
+      return;
+    }
+    if (!isPhone(form.phone)) {
+      showToast("❌ Téléphone invalide (format: 10 chiffres, ex: 0612345678)");
       return;
     }
 
@@ -104,9 +108,12 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
     if (!form.firstName.trim()) e.firstName = true;
     if (!form.lastName.trim()) e.lastName = true;
     if (!currentEmail || !isEmail(currentEmail)) e.email = true;
-    if (!form.phone.trim()) e.phone = true;
+    if (!form.phone.trim() || !isPhone(form.phone)) e.phone = true;
     setErrors(e);
-    if (Object.keys(e).length > 0) return;
+    if (Object.keys(e).length > 0) {
+      showToast("❌ Vérifiez le format de vos informations");
+      return;
+    }
 
     const mc = localCart.length;
     if (mc === 0) {

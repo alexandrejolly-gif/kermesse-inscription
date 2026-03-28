@@ -3,7 +3,6 @@ import { supabase } from "./lib/supabase";
 import { T, useResponsive } from "./styles/theme";
 import Header from "./components/Header";
 import InscriptionView from "./components/InscriptionView";
-import ResultsView from "./components/ResultsView";
 import AdminView from "./components/AdminView";
 import Toast from "./components/Toast";
 
@@ -131,14 +130,6 @@ export default function App() {
             cfg={cfg}
             showToast={showToast}
             onRefresh={fetchInscriptions}
-          />
-        )}
-
-        {view === "resultats" && (
-          <ResultsView
-            stands={stands}
-            timeslots={timeslots}
-            inscriptions={inscriptions}
           />
         )}
 

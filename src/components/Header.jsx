@@ -2,7 +2,6 @@ import { T, useResponsive } from "../styles/theme";
 
 const tabs = [
   { id: "inscription", icon: "📝", label: "Inscription" },
-  { id: "resultats", icon: "📊", label: "Résultats" },
   { id: "admin", icon: "⚙️", label: "" },
 ];
 
