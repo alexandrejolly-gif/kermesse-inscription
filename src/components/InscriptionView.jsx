@@ -36,9 +36,15 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       }));
       setEditingHint(true);
       setErrors({});
-      // Charger les inscriptions existantes dans le panier
+      // Charger les inscriptions existantes dans le panier (dédupliquées par slot_id)
       const myExisting = inscriptions.filter((i) => i.email.toLowerCase() === currentEmail);
-      setLocalCart(myExisting);
+      const seen = new Set();
+      const unique = myExisting.filter(ins => {
+        if (seen.has(ins.slot_id)) return false;
+        seen.add(ins.slot_id);
+        return true;
+      });
+      setLocalCart(unique);
     } else {
       setEditingHint(false);
       setLocalCart([]);
@@ -137,7 +143,7 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
         await supabase.from("ins_inscriptions").delete().in("id", ids);
       }
 
-      // Insérer toutes les inscriptions du panier
+      // Insérer toutes les inscriptions du panier (dédupliquées par slot_id)
       const name = `${form.firstName.trim()} ${form.lastName.trim()}`;
       const toInsert = localCart.map(i => ({
         id: uid(),
@@ -148,7 +154,15 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
         slot_id: i.slot_id,
       }));
 
-      const { error } = await supabase.from("ins_inscriptions").insert(toInsert);
+      // Dédupliquer par slot_id pour éviter les erreurs de contrainte unique
+      const seenSlots = new Set();
+      const uniqueInserts = toInsert.filter(ins => {
+        if (seenSlots.has(ins.slot_id)) return false;
+        seenSlots.add(ins.slot_id);
+        return true;
+      });
+
+      const { error } = await supabase.from("ins_inscriptions").insert(uniqueInserts);
       if (error) throw error;
 
       // Send confirmation email
