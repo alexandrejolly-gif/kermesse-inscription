@@ -24,10 +24,17 @@ export default function Header({ cfg, view, setView }) {
       )}
       <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div style={{ flex: 1 }}>
-          <h1 style={{
-            fontSize: mobile ? 16 : 18, fontWeight: 800,
-            color: "#fff", margin: 0, fontFamily: T.font,
-          }}>
+          <h1
+            onClick={() => setView("inscription")}
+            style={{
+              fontSize: mobile ? 16 : 18, fontWeight: 800,
+              color: "#fff", margin: 0, fontFamily: T.font,
+              cursor: "pointer",
+              transition: "opacity .2s",
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = "0.85"}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+          >
             {cfg.icon} {cfg.title}
           </h1>
           {cfg.description && (
