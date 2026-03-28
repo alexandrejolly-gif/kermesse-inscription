@@ -13,12 +13,16 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Panier local (inscriptions non validées)
+  const [localCart, setLocalCart] = useState([]);
+
   const currentEmail = form.email.trim().toLowerCase();
 
   // Email blur: find existing inscriptions
   const handleEmailBlur = useCallback(() => {
     if (!currentEmail || !isEmail(currentEmail)) {
       setEditingHint(false);
+      setLocalCart([]); // Vider le panier si email invalide
       return;
     }
     const existing = inscriptions.find((i) => i.email.toLowerCase() === currentEmail);
@@ -32,15 +36,23 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       }));
       setEditingHint(true);
       setErrors({});
+      // Charger les inscriptions existantes dans le panier
+      const myExisting = inscriptions.filter((i) => i.email.toLowerCase() === currentEmail);
+      setLocalCart(myExisting.map(i => ({ ...i, isExisting: true })));
     } else {
       setEditingHint(false);
+      setLocalCart([]);
     }
   }, [currentEmail, inscriptions]);
 
-  // Add inscription (click on free slot)
-  const handleAdd = useCallback(async (standId, slotId) => {
-    if (!currentEmail) {
-      showToast("❌ Renseignez votre email d'abord");
+  // Fusionner inscriptions existantes + panier local
+  const allInscriptions = [...inscriptions, ...localCart.filter(c => !c.isExisting)];
+
+  // Add inscription to local cart
+  const handleAdd = useCallback((standId, slotId) => {
+    // Vérifier que tous les champs obligatoires sont remplis
+    if (!form.firstName.trim() || !form.lastName.trim() || !currentEmail || !form.phone.trim()) {
+      showToast("❌ Remplissez tous les champs (prénom, nom, email, téléphone)");
       return;
     }
     if (!isEmail(currentEmail)) {
@@ -49,65 +61,54 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
     }
 
     const stand = stands.find((s) => s.id === standId);
-    const slotList = inscriptions.filter((i) => i.stand_id === standId && i.slot_id === slotId);
+    const slotList = allInscriptions.filter((i) => i.stand_id === standId && i.slot_id === slotId);
     if (slotList.length >= stand.capacity) {
       showToast("❌ Complet");
       return;
     }
-    if (inscriptions.some((i) => i.email === currentEmail && i.slot_id === slotId)) {
+    if (allInscriptions.some((i) => i.email === currentEmail && i.slot_id === slotId)) {
       showToast("❌ Conflit horaire — vous êtes déjà inscrit·e sur ce créneau");
       return;
     }
 
-    const name = `${form.firstName} ${form.lastName}`.trim() || "Vous";
+    const name = `${form.firstName.trim()} ${form.lastName.trim()}`;
     const slot = timeslots.find((t) => t.id === slotId);
 
-    const { error } = await supabase.from("ins_inscriptions").insert({
+    // Ajouter au panier local
+    const newInscription = {
       id: uid(),
       email: currentEmail,
       name,
       phone: form.phone || "",
       stand_id: standId,
       slot_id: slotId,
-    });
+      isExisting: false,
+    };
 
-    if (error) {
-      if (error.code === "23505") {
-        showToast("❌ Conflit horaire");
-      } else {
-        showToast("❌ Erreur : " + error.message);
-      }
-      return;
-    }
-
+    setLocalCart(prev => [...prev, newInscription]);
     showToast(`✅ ${stand.emoji} ${stand.label} · ${slot.label}`);
-    onRefresh();
-  }, [currentEmail, form, stands, timeslots, inscriptions, showToast, onRefresh]);
+  }, [currentEmail, form, stands, timeslots, allInscriptions, showToast]);
 
-  // Remove inscription
-  const handleRemove = useCallback(async (insId, standId, slotId) => {
+  // Remove inscription from local cart
+  const handleRemove = useCallback((insId, standId, slotId) => {
     const stand = stands.find((s) => s.id === standId);
     const slot = timeslots.find((t) => t.id === slotId);
 
-    const { error } = await supabase.from("ins_inscriptions").delete().eq("id", insId);
-    if (error) {
-      showToast("❌ Erreur : " + error.message);
-      return;
-    }
-    showToast(`❌ Désinscription — ${stand?.emoji || ""} ${slot?.label || ""}`);
-    onRefresh();
-  }, [stands, timeslots, showToast, onRefresh]);
+    setLocalCart(prev => prev.filter(i => i.id !== insId));
+    showToast(`❌ Retrait — ${stand?.emoji || ""} ${slot?.label || ""}`);
+  }, [stands, timeslots, showToast]);
 
-  // Submit / Validate
+  // Submit / Validate - save to Supabase
   const handleSubmit = async () => {
     const e = {};
     if (!form.firstName.trim()) e.firstName = true;
     if (!form.lastName.trim()) e.lastName = true;
     if (!currentEmail || !isEmail(currentEmail)) e.email = true;
+    if (!form.phone.trim()) e.phone = true;
     setErrors(e);
     if (Object.keys(e).length > 0) return;
 
-    const mc = inscriptions.filter((i) => i.email === currentEmail).length;
+    const mc = localCart.length;
     if (mc === 0) {
       showToast("❌ Sélectionnez au moins un créneau");
       return;
@@ -115,45 +116,59 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
 
     setSubmitting(true);
 
-    // Update name/phone on all my inscriptions
-    const name = `${form.firstName.trim()} ${form.lastName.trim()}`;
-    await supabase
-      .from("ins_inscriptions")
-      .update({ name, phone: form.phone || "" })
-      .eq("email", currentEmail);
+    try {
+      // Supprimer les anciennes inscriptions pour cet email
+      await supabase.from("ins_inscriptions").delete().eq("email", currentEmail);
 
-    // Send confirmation email
-    const myInscriptions = inscriptions
-      .filter((i) => i.email === currentEmail)
-      .map((i) => {
+      // Insérer toutes les inscriptions du panier
+      const name = `${form.firstName.trim()} ${form.lastName.trim()}`;
+      const toInsert = localCart.map(i => ({
+        id: uid(),
+        email: currentEmail,
+        name,
+        phone: form.phone || "",
+        stand_id: i.stand_id,
+        slot_id: i.slot_id,
+      }));
+
+      const { error } = await supabase.from("ins_inscriptions").insert(toInsert);
+      if (error) throw error;
+
+      // Send confirmation email
+      const myInscriptions = localCart.map((i) => {
         const stand = stands.find((s) => s.id === i.stand_id);
         const slot = timeslots.find((t) => t.id === i.slot_id);
         return { standLabel: stand?.label || "", standEmoji: stand?.emoji || "", slotLabel: slot?.label || "" };
       });
 
-    try {
-      const res = await fetch("/api/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: currentEmail,
-          firstName: form.firstName.trim(),
-          inscriptions: myInscriptions,
-          siteTitle: cfg.title,
-        }),
-      });
-      if (!res.ok) {
-        console.warn("Email sending failed:", await res.text());
+      try {
+        const res = await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: currentEmail,
+            firstName: form.firstName.trim(),
+            inscriptions: myInscriptions,
+            siteTitle: cfg.title,
+          }),
+        });
+        if (!res.ok) {
+          console.warn("Email sending failed:", await res.text());
+        }
+      } catch (err) {
+        console.warn("Email sending failed:", err);
       }
-    } catch (err) {
-      console.warn("Email sending failed:", err);
-    }
 
-    setSubmitting(false);
-    setSubmitted(true);
+      onRefresh();
+      setSubmitting(false);
+      setSubmitted(true);
+    } catch (err) {
+      showToast("❌ Erreur : " + err.message);
+      setSubmitting(false);
+    }
   };
 
-  const mc = inscriptions.filter((i) => i.email === currentEmail).length;
+  const mc = localCart.length;
 
   // Thank you screen
   if (submitted) {
@@ -175,6 +190,7 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
             setForm({ firstName: "", lastName: "", email: "", phone: "" });
             setErrors({});
             setEditingHint(false);
+            setLocalCart([]);
           }}
           style={{
             padding: "10px 24px", borderRadius: 10, border: "none",
@@ -200,7 +216,7 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       />
 
       <Matrix
-        inscriptions={inscriptions}
+        inscriptions={allInscriptions}
         stands={stands}
         timeslots={timeslots}
         email={currentEmail}
@@ -210,7 +226,7 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       />
 
       <MyRecap
-        inscriptions={inscriptions}
+        inscriptions={localCart}
         email={currentEmail}
         stands={stands}
         timeslots={timeslots}

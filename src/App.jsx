@@ -47,13 +47,16 @@ export default function App() {
     ctx.textBaseline = "middle";
     ctx.fillText(icon, 32, 36);
     const url = canvas.toDataURL("image/png");
-    let link = document.querySelector("link[rel='icon']");
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "icon";
-      document.head.appendChild(link);
-    }
+
+    // Remove all existing favicons
+    const existingIcons = document.querySelectorAll("link[rel*='icon']");
+    existingIcons.forEach(link => link.remove());
+
+    // Create new one
+    const link = document.createElement("link");
+    link.rel = "icon";
     link.href = url;
+    document.head.appendChild(link);
   }, [cfg.icon]);
 
   // ─── Dynamic page title

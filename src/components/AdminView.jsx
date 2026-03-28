@@ -297,30 +297,11 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
                 style={inputBase(mobile)}
               />
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div>
-                <label style={lbl(mobile)}>Icône</label>
-                <input
-                  value={localCfg.icon}
-                  onChange={(e) => setLocalCfg((c) => ({ ...c, icon: e.target.value }))}
-                  style={{ ...inputBase(mobile), textAlign: "center", fontSize: 20 }}
-                />
-              </div>
-              <div>
-                <label style={lbl(mobile)}>Mot de passe admin</label>
-                <input
-                  value={localCfg.admin_password}
-                  onChange={(e) => setLocalCfg((c) => ({ ...c, admin_password: e.target.value }))}
-                  style={inputBase(mobile)}
-                />
-              </div>
-            </div>
             <div>
-              <label style={lbl(mobile)}>Image header (URL)</label>
+              <label style={lbl(mobile)}>Mot de passe admin</label>
               <input
-                value={localCfg.header_image || ""}
-                onChange={(e) => setLocalCfg((c) => ({ ...c, header_image: e.target.value }))}
-                placeholder="https://..."
+                value={localCfg.admin_password}
+                onChange={(e) => setLocalCfg((c) => ({ ...c, admin_password: e.target.value }))}
                 style={inputBase(mobile)}
               />
             </div>

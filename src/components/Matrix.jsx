@@ -68,7 +68,7 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
               }}>
                 <div style={{ fontSize: mobile ? 16 : 20, lineHeight: 1 }}>{stand.emoji}</div>
                 <div style={{
-                  fontSize: mobile ? 8 : 9, fontWeight: 800, color: "#44403C",
+                  fontSize: mobile ? 8 : 11, fontWeight: 800, color: "#44403C",
                   lineHeight: 1.15, marginTop: 1,
                   overflow: "hidden",
                   display: "-webkit-box",
