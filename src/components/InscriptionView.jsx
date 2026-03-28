@@ -132,16 +132,8 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
     setSubmitting(true);
 
     try {
-      // Supprimer les anciennes inscriptions pour cet email (case-insensitive)
-      const { data: existing } = await supabase
-        .from("ins_inscriptions")
-        .select("id")
-        .ilike("email", currentEmail);
-
-      if (existing && existing.length > 0) {
-        const ids = existing.map(e => e.id);
-        await supabase.from("ins_inscriptions").delete().in("id", ids);
-      }
+      // Supprimer les anciennes inscriptions pour cet email (case-insensitive via RPC)
+      await supabase.rpc('delete_inscriptions_by_email', { user_email: currentEmail });
 
       // Insérer toutes les inscriptions du panier (dédupliquées par slot_id)
       const name = `${form.firstName.trim()} ${form.lastName.trim()}`;
