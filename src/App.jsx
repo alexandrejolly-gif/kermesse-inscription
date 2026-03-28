@@ -60,8 +60,8 @@ export default function App() {
 
   // ─── Dynamic page title
   useEffect(() => {
-    document.title = `${cfg.icon || "🎪"} ${cfg.title || "Kermesse"} — Inscription`;
-  }, [cfg.title, cfg.icon]);
+    document.title = `${cfg.title || "Kermesse"} — Inscription`;
+  }, [cfg.title]);
 
   // ─── Fetch all data
   const fetchAll = useCallback(async () => {

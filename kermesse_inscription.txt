@@ -1,0 +1,12 @@
+re_XfzLf3y7_2fTovWJ8qgBMaRVmxTjCJK4T
+
+re_aemWxcW3_BsgMMV4geUjMMfYLBAUi7795
+
+/model — Affiche le modèle actuellement sélectionné et te laisse en changer.
+/status — Affiche le modèle en cours d'utilisation. Claude
+Et un point important : sur le plan Pro, tu ne peux utiliser Opus qu'en activant et en achetant de l'extra usage (facturation au token en plus de l'abonnement). Claude Donc soit il a basculé silencieusement sur Sonnet, soit tu es en train de consommer de l'extra usage payant sans le savoir.
+Vérifie aussi /usage — ça montre ta consommation de tokens et si tu tapes dans de l'extra usage.
+
+
+/plugin marketplace add anthropics/claude-code                                                                          
+     /plugin install frontend-design@claude-code-plugins   
