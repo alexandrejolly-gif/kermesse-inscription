@@ -38,15 +38,18 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       setErrors({});
       // Charger les inscriptions existantes dans le panier
       const myExisting = inscriptions.filter((i) => i.email.toLowerCase() === currentEmail);
-      setLocalCart(myExisting.map(i => ({ ...i, isExisting: true })));
+      setLocalCart(myExisting);
     } else {
       setEditingHint(false);
       setLocalCart([]);
     }
   }, [currentEmail, inscriptions]);
 
-  // Fusionner inscriptions existantes + panier local
-  const allInscriptions = [...inscriptions, ...localCart.filter(c => !c.isExisting)];
+  // Fusionner inscriptions : toutes SAUF celles de l'utilisateur (qui sont dans localCart)
+  const allInscriptions = [
+    ...inscriptions.filter(i => i.email.toLowerCase() !== currentEmail),
+    ...localCart
+  ];
 
   // Add inscription to local cart
   const handleAdd = useCallback((standId, slotId) => {
@@ -70,7 +73,7 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       showToast("❌ Complet");
       return;
     }
-    if (allInscriptions.some((i) => i.email === currentEmail && i.slot_id === slotId)) {
+    if (localCart.some((i) => i.slot_id === slotId)) {
       showToast("❌ Conflit horaire — vous êtes déjà inscrit·e sur ce créneau");
       return;
     }
@@ -86,7 +89,6 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       phone: form.phone || "",
       stand_id: standId,
       slot_id: slotId,
-      isExisting: false,
     };
 
     setLocalCart(prev => [...prev, newInscription]);
