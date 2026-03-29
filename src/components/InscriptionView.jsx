@@ -57,6 +57,44 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
     ...localCart
   ];
 
+  // Séparer stands et timeslots par type (normal vs sécurité)
+  const normalStands = stands.filter(s => s.type !== 'securite');
+  const securiteStands = stands.filter(s => s.type === 'securite');
+  const normalTimeslots = timeslots.filter(t => t.type !== 'securite');
+  const securiteTimeslots = timeslots.filter(t => t.type === 'securite');
+
+  // Fonction pour parser un horaire "HH:MM" en minutes depuis minuit
+  const parseTime = useCallback((timeStr) => {
+    if (!timeStr) return null;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  }, []);
+
+  // Fonction pour détecter les conflits horaires entre créneaux
+  const hasTimeConflict = useCallback((newSlotId) => {
+    const newSlot = timeslots.find(t => t.id === newSlotId);
+    if (!newSlot || !newSlot.start_time || !newSlot.end_time) {
+      // Si pas d'horaires définis, pas de conflit horaire possible
+      return false;
+    }
+
+    const newStart = parseTime(newSlot.start_time);
+    const newEnd = parseTime(newSlot.end_time);
+    if (newStart === null || newEnd === null) return false;
+
+    return localCart.some(ins => {
+      const insSlot = timeslots.find(t => t.id === ins.slot_id);
+      if (!insSlot || !insSlot.start_time || !insSlot.end_time) return false;
+
+      const insStart = parseTime(insSlot.start_time);
+      const insEnd = parseTime(insSlot.end_time);
+      if (insStart === null || insEnd === null) return false;
+
+      // Chevauchement si : newStart < insEnd ET newEnd > insStart
+      return newStart < insEnd && newEnd > insStart;
+    });
+  }, [localCart, timeslots, parseTime]);
+
   // Add inscription to local cart
   const handleAdd = useCallback((standId, slotId) => {
     // Vérifier que tous les champs obligatoires sont remplis
@@ -79,8 +117,14 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       showToast("❌ Complet");
       return;
     }
+    // Vérifier les conflits horaires (entre tous les tableaux)
+    if (hasTimeConflict(slotId)) {
+      showToast("❌ Conflit horaire — vous avez déjà un créneau qui chevauche");
+      return;
+    }
+    // Si pas d'horaires définis, vérifier au moins le même slot_id
     if (localCart.some((i) => i.slot_id === slotId)) {
-      showToast("❌ Conflit horaire — vous êtes déjà inscrit·e sur ce créneau");
+      showToast("❌ Vous êtes déjà inscrit·e sur ce créneau");
       return;
     }
 
@@ -99,7 +143,7 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
 
     setLocalCart(prev => [...prev, newInscription]);
     showToast(`✅ ${stand.emoji} ${stand.label} · ${slot.label}`);
-  }, [currentEmail, form, stands, timeslots, allInscriptions, showToast]);
+  }, [currentEmail, form, stands, timeslots, allInscriptions, showToast, localCart, hasTimeConflict]);
 
   // Remove inscription from local cart
   const handleRemove = useCallback((insId, standId, slotId) => {
@@ -238,15 +282,53 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
         mobile={mobile}
       />
 
-      <Matrix
-        inscriptions={allInscriptions}
-        stands={stands}
-        timeslots={timeslots}
-        email={currentEmail}
-        onAdd={handleAdd}
-        onRemove={handleRemove}
-        mobile={mobile}
-      />
+      {/* Tableau des stands normaux */}
+      {normalStands.length > 0 && normalTimeslots.length > 0 && (
+        <>
+          <h3 style={{
+            fontSize: mobile ? 14 : 16,
+            fontWeight: 800,
+            margin: mobile ? "16px 0 8px" : "20px 0 10px",
+            color: T.text,
+            fontFamily: T.font,
+          }}>
+            🎪 Stands de la kermesse
+          </h3>
+          <Matrix
+            inscriptions={allInscriptions}
+            stands={normalStands}
+            timeslots={normalTimeslots}
+            email={currentEmail}
+            onAdd={handleAdd}
+            onRemove={handleRemove}
+            mobile={mobile}
+          />
+        </>
+      )}
+
+      {/* Tableau de la sécurisation */}
+      {securiteStands.length > 0 && securiteTimeslots.length > 0 && (
+        <>
+          <h3 style={{
+            fontSize: mobile ? 14 : 16,
+            fontWeight: 800,
+            margin: mobile ? "16px 0 8px" : "20px 0 10px",
+            color: T.text,
+            fontFamily: T.font,
+          }}>
+            🔒 Sécurisation de l'accès au site
+          </h3>
+          <Matrix
+            inscriptions={allInscriptions}
+            stands={securiteStands}
+            timeslots={securiteTimeslots}
+            email={currentEmail}
+            onAdd={handleAdd}
+            onRemove={handleRemove}
+            mobile={mobile}
+          />
+        </>
+      )}
 
       <MyRecap
         inscriptions={localCart}
