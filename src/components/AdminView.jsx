@@ -9,6 +9,19 @@ const adminTabs = [
   { id: "inscriptions", icon: "👥", label: "Inscriptions" },
 ];
 
+// Créneaux possibles pour les stands (8h à 19h, 1h)
+const STAND_SLOTS = Array.from({ length: 12 }, (_, i) => {
+  const h = i + 8;
+  return { id: `${h}h`, label: `${h}h` };
+});
+
+// Créneaux possibles pour la sécurisation (8h à 19h30, 30min)
+const SECU_SLOTS = [];
+for (let h = 8; h < 20; h++) {
+  SECU_SLOTS.push({ id: `${h}h`, label: `${h}h` });
+  if (h < 20) SECU_SLOTS.push({ id: `${h}h30`, label: `${h}h30` });
+}
+
 export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg, setStands, setTimeslots, showToast, onRefresh }) {
   const { mobile } = useResponsive();
   const [authed, setAuthed] = useState(false);
@@ -21,11 +34,30 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
   const [localSlots, setLocalSlots] = useState(timeslots);
   const [localCfg, setLocalCfg] = useState(cfg);
 
+  // Créneaux actifs (pour la grille de toggle)
+  const [activeStandSlots, setActiveStandSlots] = useState(new Set());
+  const [activeSecuSlots, setActiveSecuSlots] = useState(new Set());
+
   // Sync when props change
   useEffect(() => {
     setLocalStands(stands);
     setLocalSlots(timeslots);
     setLocalCfg(cfg);
+
+    // Initialiser les créneaux actifs depuis timeslots
+    const standSet = new Set();
+    const secuSet = new Set();
+
+    timeslots.forEach(slot => {
+      if (slot.type === 'securite') {
+        secuSet.add(slot.label);
+      } else {
+        standSet.add(slot.label);
+      }
+    });
+
+    setActiveStandSlots(standSet);
+    setActiveSecuSlots(secuSet);
   }, [stands, timeslots, cfg]);
 
   // Auth
@@ -236,125 +268,171 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
         <>
           {/* Créneaux des stands (1h) */}
           <div style={card(mobile)}>
-            <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 4px", fontFamily: T.font }}>🎪 Créneaux des stands</h3>
-            <p style={{ fontSize: 11, color: T.hint, margin: "0 0 10px", fontFamily: T.font }}>
-              Format: <strong>XXh</strong> (ex: 14h) • Durée: 1 heure
+            <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 4px", fontFamily: T.font }}>
+              🎪 Créneaux des stands
+            </h3>
+            <p style={{ fontSize: 11, color: T.hint, margin: "0 0 12px", fontFamily: T.font }}>
+              Durée : 1 heure · Cliquez pour activer/désactiver
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {localSlots.filter(s => s.type !== 'securite').map((s, i, arr) => (
-                <EditableItem
-                  key={s.id}
-                  item={s}
-                  fields={[
-                    { key: "label", placeholder: "Ex: 14h", flex: 1 },
-                  ]}
-                  onChange={(id, key, val) => {
-                    // Valider le format XXh
-                    if (key === 'label' && val && !/^\d{1,2}h$/.test(val)) {
-                      showToast("⚠️ Format attendu: XXh (ex: 14h)");
-                    }
-                    setLocalSlots((prev) => prev.map((x) => (x.id === id ? { ...x, [key]: val, type: 'normal' } : x)));
-                  }}
-                  onDelete={() => setLocalSlots((prev) => prev.filter((x) => x.id !== s.id))}
-                  onMoveUp={() => {
-                    const normalSlots = localSlots.filter(x => x.type !== 'securite');
-                    const idx = normalSlots.findIndex(x => x.id === s.id);
-                    if (idx > 0) {
-                      const newNormalSlots = move(normalSlots, idx, idx - 1);
-                      setLocalSlots((prev) => [...newNormalSlots, ...prev.filter(x => x.type === 'securite')]);
-                    }
-                  }}
-                  onMoveDown={() => {
-                    const normalSlots = localSlots.filter(x => x.type !== 'securite');
-                    const idx = normalSlots.findIndex(x => x.id === s.id);
-                    if (idx < normalSlots.length - 1) {
-                      const newNormalSlots = move(normalSlots, idx, idx + 1);
-                      setLocalSlots((prev) => [...newNormalSlots, ...prev.filter(x => x.type === 'securite')]);
-                    }
-                  }}
-                  isFirst={i === 0}
-                  isLast={i === arr.length - 1}
-                  mobile={mobile}
-                />
-              ))}
+
+            {/* Grille de boutons toggle */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: mobile ? "repeat(4, 1fr)" : "repeat(auto-fill, minmax(70px, 1fr))",
+              gap: 8,
+              marginBottom: 12,
+            }}>
+              {STAND_SLOTS.map(slot => {
+                const isActive = activeStandSlots.has(slot.id);
+                return (
+                  <button
+                    key={slot.id}
+                    onClick={() => {
+                      setActiveStandSlots(prev => {
+                        const next = new Set(prev);
+                        if (next.has(slot.id)) next.delete(slot.id);
+                        else next.add(slot.id);
+                        return next;
+                      });
+                    }}
+                    style={{
+                      padding: "10px 4px",
+                      borderRadius: 10,
+                      fontSize: 14,
+                      fontWeight: isActive ? 800 : 600,
+                      fontFamily: T.font,
+                      cursor: "pointer",
+                      transition: "all .2s",
+                      border: isActive ? `2px solid ${T.primaryDk}` : "2px solid transparent",
+                      background: isActive ? T.primary : T.surfaceAlt,
+                      color: isActive ? "#fff" : T.muted,
+                      boxShadow: isActive ? "0 2px 8px rgba(249,115,22,.2)" : "none",
+                    }}
+                  >
+                    {slot.label}
+                  </button>
+                );
+              })}
             </div>
-            <button
-              onClick={() =>
-                setLocalSlots((prev) => [
-                  ...prev,
-                  { id: uid(), label: "", position: prev.length, type: 'normal' },
-                ])
-              }
-              style={{ ...smallBtn(T.primary, T.primaryBg), marginTop: 8 }}
-            >
-              + Ajouter un créneau stand
-            </button>
+
+            {/* Résumé */}
+            <div style={{ fontSize: 12, color: T.muted, fontWeight: 600, marginTop: 8, fontFamily: T.font }}>
+              {activeStandSlots.size === 0 ? (
+                <em>Aucun créneau sélectionné</em>
+              ) : (
+                <>
+                  {activeStandSlots.size} créneau{activeStandSlots.size > 1 ? "x" : ""} sélectionné{activeStandSlots.size > 1 ? "s" : ""} : {" "}
+                  {Array.from(activeStandSlots).sort().join(", ")}
+                </>
+              )}
+            </div>
           </div>
 
           {/* Créneaux de sécurisation (30min) */}
           <div style={card(mobile)}>
-            <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 4px", fontFamily: T.font }}>🔒 Créneaux de sécurisation</h3>
-            <p style={{ fontSize: 11, color: T.hint, margin: "0 0 10px", fontFamily: T.font }}>
-              Format: <strong>XXh</strong> ou <strong>XXh30</strong> (ex: 14h ou 14h30) • Durée: 30 minutes
+            <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 4px", fontFamily: T.font }}>
+              🔒 Créneaux de sécurisation
+            </h3>
+            <p style={{ fontSize: 11, color: T.hint, margin: "0 0 12px", fontFamily: T.font }}>
+              Durée : 30 minutes · Cliquez pour activer/désactiver
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {localSlots.filter(s => s.type === 'securite').map((s, i, arr) => (
-                <EditableItem
-                  key={s.id}
-                  item={s}
-                  fields={[
-                    { key: "label", placeholder: "Ex: 14h30", flex: 1 },
-                  ]}
-                  onChange={(id, key, val) => {
-                    // Valider le format XXh ou XXh30
-                    if (key === 'label' && val && !/^\d{1,2}h(30)?$/.test(val)) {
-                      showToast("⚠️ Format attendu: XXh ou XXh30 (ex: 14h ou 14h30)");
-                    }
-                    setLocalSlots((prev) => prev.map((x) => (x.id === id ? { ...x, [key]: val, type: 'securite' } : x)));
-                  }}
-                  onDelete={() => setLocalSlots((prev) => prev.filter((x) => x.id !== s.id))}
-                  onMoveUp={() => {
-                    const secSlots = localSlots.filter(x => x.type === 'securite');
-                    const idx = secSlots.findIndex(x => x.id === s.id);
-                    if (idx > 0) {
-                      const newSecSlots = move(secSlots, idx, idx - 1);
-                      setLocalSlots((prev) => [...prev.filter(x => x.type !== 'securite'), ...newSecSlots]);
-                    }
-                  }}
-                  onMoveDown={() => {
-                    const secSlots = localSlots.filter(x => x.type === 'securite');
-                    const idx = secSlots.findIndex(x => x.id === s.id);
-                    if (idx < secSlots.length - 1) {
-                      const newSecSlots = move(secSlots, idx, idx + 1);
-                      setLocalSlots((prev) => [...prev.filter(x => x.type !== 'securite'), ...newSecSlots]);
-                    }
-                  }}
-                  isFirst={i === 0}
-                  isLast={i === arr.length - 1}
-                  mobile={mobile}
-                />
-              ))}
+
+            {/* Grille de boutons toggle */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: mobile ? "repeat(4, 1fr)" : "repeat(auto-fill, minmax(62px, 1fr))",
+              gap: 8,
+              marginBottom: 12,
+            }}>
+              {SECU_SLOTS.map(slot => {
+                const isActive = activeSecuSlots.has(slot.id);
+                return (
+                  <button
+                    key={slot.id}
+                    onClick={() => {
+                      setActiveSecuSlots(prev => {
+                        const next = new Set(prev);
+                        if (next.has(slot.id)) next.delete(slot.id);
+                        else next.add(slot.id);
+                        return next;
+                      });
+                    }}
+                    style={{
+                      padding: "8px 3px",
+                      borderRadius: 10,
+                      fontSize: 13,
+                      fontWeight: isActive ? 800 : 600,
+                      fontFamily: T.font,
+                      cursor: "pointer",
+                      transition: "all .2s",
+                      border: isActive ? "2px solid #6D28D9" : "2px solid transparent",
+                      background: isActive ? "#7C3AED" : T.surfaceAlt,
+                      color: isActive ? "#fff" : T.muted,
+                      boxShadow: isActive ? "0 2px 8px rgba(124,58,237,.2)" : "none",
+                    }}
+                  >
+                    {slot.label}
+                  </button>
+                );
+              })}
             </div>
-            <button
-              onClick={() =>
-                setLocalSlots((prev) => [
-                  ...prev,
-                  { id: uid(), label: "", position: prev.length, type: 'securite' },
-                ])
-              }
-              style={{ ...smallBtn(T.primary, T.primaryBg), marginTop: 8 }}
-            >
-              + Ajouter un créneau sécurité
-            </button>
+
+            {/* Résumé */}
+            <div style={{ fontSize: 12, color: T.muted, fontWeight: 600, marginTop: 8, fontFamily: T.font }}>
+              {activeSecuSlots.size === 0 ? (
+                <em>Aucun créneau sélectionné</em>
+              ) : (
+                <>
+                  {activeSecuSlots.size} créneau{activeSecuSlots.size > 1 ? "x" : ""} sélectionné{activeSecuSlots.size > 1 ? "s" : ""} : {" "}
+                  {Array.from(activeSecuSlots).sort((a, b) => {
+                    // Tri personnalisé pour gérer XXh et XXh30
+                    const parseSlot = (s) => {
+                      const match = s.match(/^(\d+)h(\d+)?$/);
+                      if (!match) return 0;
+                      const h = parseInt(match[1]);
+                      const m = match[2] ? parseInt(match[2]) : 0;
+                      return h * 60 + m;
+                    };
+                    return parseSlot(a) - parseSlot(b);
+                  }).join(", ")}
+                </>
+              )}
+            </div>
           </div>
 
           {/* Bouton sauvegarder global */}
           <button
-            onClick={saveStandsSlots}
+            onClick={() => {
+              setSaving(true);
+              // Reconstruire localSlots depuis les sets actifs
+              const standSlots = STAND_SLOTS
+                .filter(s => activeStandSlots.has(s.id))
+                .map((s, i) => ({
+                  id: uid(),
+                  label: s.label,
+                  position: i,
+                  type: 'normal',
+                }));
+
+              const secuSlots = SECU_SLOTS
+                .filter(s => activeSecuSlots.has(s.id))
+                .map((s, i) => ({
+                  id: uid(),
+                  label: s.label,
+                  position: standSlots.length + i,
+                  type: 'securite',
+                }));
+
+              const allSlots = [...standSlots, ...secuSlots];
+              setLocalSlots(allSlots);
+
+              // Appeler saveStandsSlots après mise à jour
+              setTimeout(() => saveStandsSlots(), 0);
+            }}
             disabled={saving}
             style={{ ...btn(true, mobile), background: T.primary, opacity: saving ? 0.5 : 1 }}
           >
-            {saving ? "Enregistrement…" : "💾 Enregistrer stands & créneaux"}
+            {saving ? "Enregistrement…" : "💾 Enregistrer les créneaux"}
           </button>
         </>
       )}
