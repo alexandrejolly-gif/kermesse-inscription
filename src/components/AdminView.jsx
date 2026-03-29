@@ -439,7 +439,6 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
                 if (!res.ok) throw new Error(await res.text());
 
                 showToast("✅ Créneaux enregistrés");
-                setLocalSlots(allSlots);
                 onRefresh();
               } catch (err) {
                 showToast("❌ Erreur : " + err.message);
