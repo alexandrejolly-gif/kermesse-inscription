@@ -402,32 +402,50 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
 
           {/* Bouton sauvegarder global */}
           <button
-            onClick={() => {
+            onClick={async () => {
               setSaving(true);
-              // Reconstruire localSlots depuis les sets actifs
-              const standSlots = STAND_SLOTS
-                .filter(s => activeStandSlots.has(s.id))
-                .map((s, i) => ({
-                  id: uid(),
-                  label: s.label,
-                  position: i,
-                  type: 'normal',
-                }));
+              try {
+                // Reconstruire les slots depuis les sets actifs
+                const standSlots = STAND_SLOTS
+                  .filter(s => activeStandSlots.has(s.id))
+                  .map((s, i) => ({
+                    id: uid(),
+                    label: s.label,
+                    position: i,
+                    type: 'normal',
+                  }));
 
-              const secuSlots = SECU_SLOTS
-                .filter(s => activeSecuSlots.has(s.id))
-                .map((s, i) => ({
-                  id: uid(),
-                  label: s.label,
-                  position: standSlots.length + i,
-                  type: 'securite',
-                }));
+                const secuSlots = SECU_SLOTS
+                  .filter(s => activeSecuSlots.has(s.id))
+                  .map((s, i) => ({
+                    id: uid(),
+                    label: s.label,
+                    position: standSlots.length + i,
+                    type: 'securite',
+                  }));
 
-              const allSlots = [...standSlots, ...secuSlots];
-              setLocalSlots(allSlots);
+                const allSlots = [...standSlots, ...secuSlots];
 
-              // Appeler saveStandsSlots après mise à jour
-              setTimeout(() => saveStandsSlots(), 0);
+                // Appeler directement l'API avec les nouveaux slots
+                const res = await fetch("/api/save-stands", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    stands: localStands.map((s, i) => ({ ...s, position: i })),
+                    timeslots: allSlots.map((t, i) => ({ ...t, position: i })),
+                  }),
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+
+                showToast("✅ Créneaux enregistrés");
+                setLocalSlots(allSlots);
+                onRefresh();
+              } catch (err) {
+                showToast("❌ Erreur : " + err.message);
+              } finally {
+                setSaving(false);
+              }
             }}
             disabled={saving}
             style={{ ...btn(true, mobile), background: T.primary, opacity: saving ? 0.5 : 1 }}
