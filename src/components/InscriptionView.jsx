@@ -193,7 +193,7 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
 
     setLocalCart(prev => [...prev, newInscription]);
     showToast(`✅ ${stand.emoji} ${stand.label} · ${slot.label}`);
-  }, [currentEmail, form, stands, timeslots, allInscriptions, showToast, hasTimeConflict]);
+  }, [currentEmail, form, stands, timeslots, allInscriptions, showToast]);
 
   // Remove inscription from local cart
   const handleRemove = useCallback((insId, standId, slotId) => {
