@@ -70,22 +70,47 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
     return hours * 60 + minutes;
   }, []);
 
-  // Fonction pour extraire les horaires depuis un label (ex: "14h-15h" -> {start: "14:00", end: "15:00"})
-  const parseTimeslotLabel = useCallback((label) => {
+  // Fonction pour extraire les horaires depuis un label avec durée implicite selon le type
+  const parseTimeslotLabel = useCallback((label, type) => {
     if (!label) return { start: null, end: null };
-    // Match formats: "14h-15h", "14h00-15h00", "14:00-15:00", "14h30-15h30"
-    const match = label.match(/(\d{1,2})h?(\d{2})?[-–](\d{1,2})h?(\d{2})?/);
-    if (!match) return { start: null, end: null };
 
-    const startHour = parseInt(match[1]);
-    const startMin = match[2] ? parseInt(match[2]) : 0;
-    const endHour = parseInt(match[3]);
-    const endMin = match[4] ? parseInt(match[4]) : 0;
+    // Format avec plage explicite : "14h-15h", "14h30-15h", etc.
+    const rangeMatch = label.match(/(\d{1,2})h?(\d{2})?[-–](\d{1,2})h?(\d{2})?/);
+    if (rangeMatch) {
+      const startHour = parseInt(rangeMatch[1]);
+      const startMin = rangeMatch[2] ? parseInt(rangeMatch[2]) : 0;
+      const endHour = parseInt(rangeMatch[3]);
+      const endMin = rangeMatch[4] ? parseInt(rangeMatch[4]) : 0;
 
-    return {
-      start: `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}`,
-      end: `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`
-    };
+      return {
+        start: `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}`,
+        end: `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`
+      };
+    }
+
+    // Format simple : "14h" ou "14h30" → durée implicite selon le type
+    const simpleMatch = label.match(/^(\d{1,2})h(\d{2})?$/);
+    if (simpleMatch) {
+      const startHour = parseInt(simpleMatch[1]);
+      const startMin = simpleMatch[2] ? parseInt(simpleMatch[2]) : 0;
+
+      // Durée implicite : 1h pour normal, 30min pour sécurité
+      const duration = type === 'securite' ? 30 : 60;
+      let endHour = startHour;
+      let endMin = startMin + duration;
+
+      if (endMin >= 60) {
+        endHour += Math.floor(endMin / 60);
+        endMin = endMin % 60;
+      }
+
+      return {
+        start: `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}`,
+        end: `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`
+      };
+    }
+
+    return { start: null, end: null };
   }, []);
 
   // Fonction pour obtenir les horaires d'un slot (depuis start_time/end_time ou en parsant le label)
@@ -97,8 +122,8 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       return { start: slot.start_time, end: slot.end_time };
     }
 
-    // Sinon, parser le label
-    return parseTimeslotLabel(slot.label);
+    // Sinon, parser le label avec le type pour durée implicite
+    return parseTimeslotLabel(slot.label, slot.type || 'normal');
   }, [parseTimeslotLabel]);
 
   // Fonction pour détecter les conflits horaires entre créneaux

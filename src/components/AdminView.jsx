@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { T, inputBase, lbl, btn, uid, move, buildCSV, useResponsive, card } from "../styles/theme";
 import EditableItem from "./EditableItem";
+import TimeslotGenerator from "./TimeslotGenerator";
 
 const adminTabs = [
   { id: "stands", icon: "🏪", label: "Stands" },
@@ -233,9 +234,16 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
 
       {/* ─── SLOTS TAB ─── */}
       {tab === "slots" && (
-        <div style={card(mobile)}>
-          <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 10px", fontFamily: T.font }}>⏰ Créneaux</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <>
+          <TimeslotGenerator
+            useResponsive={useResponsive}
+            showToast={showToast}
+            onRefresh={onRefresh}
+          />
+
+          <div style={card(mobile)}>
+            <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 10px", fontFamily: T.font }}>⏰ Créneaux manuels</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {localSlots.map((s, i) => (
               <EditableItem
                 key={s.id}
@@ -274,6 +282,7 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
             {saving ? "Enregistrement…" : "💾 Enregistrer stands & créneaux"}
           </button>
         </div>
+        </>
       )}
 
       {/* ─── GENERAL TAB ─── */}
