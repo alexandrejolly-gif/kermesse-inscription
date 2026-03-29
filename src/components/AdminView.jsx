@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { T, inputBase, lbl, btn, uid, move, buildCSV, useResponsive, card } from "../styles/theme";
 import EditableItem from "./EditableItem";
-import TimeslotGenerator from "./TimeslotGenerator";
 
 const adminTabs = [
   { id: "stands", icon: "🏪", label: "Stands" },
@@ -235,45 +234,121 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
       {/* ─── SLOTS TAB ─── */}
       {tab === "slots" && (
         <>
-          <TimeslotGenerator
-            useResponsive={useResponsive}
-            showToast={showToast}
-            onRefresh={onRefresh}
-          />
-
+          {/* Créneaux des stands (1h) */}
           <div style={card(mobile)}>
-            <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 10px", fontFamily: T.font }}>⏰ Créneaux manuels</h3>
+            <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 4px", fontFamily: T.font }}>🎪 Créneaux des stands</h3>
+            <p style={{ fontSize: 11, color: T.hint, margin: "0 0 10px", fontFamily: T.font }}>
+              Format: <strong>XXh</strong> (ex: 14h) • Durée: 1 heure
+            </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {localSlots.map((s, i) => (
-              <EditableItem
-                key={s.id}
-                item={s}
-                fields={[
-                  { key: "label", placeholder: "Ex: 10h-11h", flex: 1 },
-                ]}
-                onChange={(id, key, val) =>
-                  setLocalSlots((prev) => prev.map((x) => (x.id === id ? { ...x, [key]: val } : x)))
-                }
-                onDelete={() => setLocalSlots((prev) => prev.filter((x) => x.id !== s.id))}
-                onMoveUp={() => setLocalSlots((prev) => move(prev, i, i - 1))}
-                onMoveDown={() => setLocalSlots((prev) => move(prev, i, i + 1))}
-                isFirst={i === 0}
-                isLast={i === localSlots.length - 1}
-                mobile={mobile}
-              />
-            ))}
+              {localSlots.filter(s => s.type !== 'securite').map((s, i, arr) => (
+                <EditableItem
+                  key={s.id}
+                  item={s}
+                  fields={[
+                    { key: "label", placeholder: "Ex: 14h", flex: 1 },
+                  ]}
+                  onChange={(id, key, val) => {
+                    // Valider le format XXh
+                    if (key === 'label' && val && !/^\d{1,2}h$/.test(val)) {
+                      showToast("⚠️ Format attendu: XXh (ex: 14h)");
+                    }
+                    setLocalSlots((prev) => prev.map((x) => (x.id === id ? { ...x, [key]: val, type: 'normal' } : x)));
+                  }}
+                  onDelete={() => setLocalSlots((prev) => prev.filter((x) => x.id !== s.id))}
+                  onMoveUp={() => {
+                    const normalSlots = localSlots.filter(x => x.type !== 'securite');
+                    const idx = normalSlots.findIndex(x => x.id === s.id);
+                    if (idx > 0) {
+                      const newNormalSlots = move(normalSlots, idx, idx - 1);
+                      setLocalSlots((prev) => [...newNormalSlots, ...prev.filter(x => x.type === 'securite')]);
+                    }
+                  }}
+                  onMoveDown={() => {
+                    const normalSlots = localSlots.filter(x => x.type !== 'securite');
+                    const idx = normalSlots.findIndex(x => x.id === s.id);
+                    if (idx < normalSlots.length - 1) {
+                      const newNormalSlots = move(normalSlots, idx, idx + 1);
+                      setLocalSlots((prev) => [...newNormalSlots, ...prev.filter(x => x.type === 'securite')]);
+                    }
+                  }}
+                  isFirst={i === 0}
+                  isLast={i === arr.length - 1}
+                  mobile={mobile}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() =>
+                setLocalSlots((prev) => [
+                  ...prev,
+                  { id: uid(), label: "", position: prev.length, type: 'normal' },
+                ])
+              }
+              style={{ ...smallBtn(T.primary, T.primaryBg), marginTop: 8 }}
+            >
+              + Ajouter un créneau stand
+            </button>
           </div>
-          <button
-            onClick={() =>
-              setLocalSlots((prev) => [
-                ...prev,
-                { id: uid(), label: "", position: prev.length },
-              ])
-            }
-            style={{ ...smallBtn(T.primary, T.primaryBg), marginTop: 8 }}
-          >
-            + Ajouter un créneau
-          </button>
+
+          {/* Créneaux de sécurisation (30min) */}
+          <div style={card(mobile)}>
+            <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 4px", fontFamily: T.font }}>🔒 Créneaux de sécurisation</h3>
+            <p style={{ fontSize: 11, color: T.hint, margin: "0 0 10px", fontFamily: T.font }}>
+              Format: <strong>XXh</strong> ou <strong>XXh30</strong> (ex: 14h ou 14h30) • Durée: 30 minutes
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {localSlots.filter(s => s.type === 'securite').map((s, i, arr) => (
+                <EditableItem
+                  key={s.id}
+                  item={s}
+                  fields={[
+                    { key: "label", placeholder: "Ex: 14h30", flex: 1 },
+                  ]}
+                  onChange={(id, key, val) => {
+                    // Valider le format XXh ou XXh30
+                    if (key === 'label' && val && !/^\d{1,2}h(30)?$/.test(val)) {
+                      showToast("⚠️ Format attendu: XXh ou XXh30 (ex: 14h ou 14h30)");
+                    }
+                    setLocalSlots((prev) => prev.map((x) => (x.id === id ? { ...x, [key]: val, type: 'securite' } : x)));
+                  }}
+                  onDelete={() => setLocalSlots((prev) => prev.filter((x) => x.id !== s.id))}
+                  onMoveUp={() => {
+                    const secSlots = localSlots.filter(x => x.type === 'securite');
+                    const idx = secSlots.findIndex(x => x.id === s.id);
+                    if (idx > 0) {
+                      const newSecSlots = move(secSlots, idx, idx - 1);
+                      setLocalSlots((prev) => [...prev.filter(x => x.type !== 'securite'), ...newSecSlots]);
+                    }
+                  }}
+                  onMoveDown={() => {
+                    const secSlots = localSlots.filter(x => x.type === 'securite');
+                    const idx = secSlots.findIndex(x => x.id === s.id);
+                    if (idx < secSlots.length - 1) {
+                      const newSecSlots = move(secSlots, idx, idx + 1);
+                      setLocalSlots((prev) => [...prev.filter(x => x.type !== 'securite'), ...newSecSlots]);
+                    }
+                  }}
+                  isFirst={i === 0}
+                  isLast={i === arr.length - 1}
+                  mobile={mobile}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() =>
+                setLocalSlots((prev) => [
+                  ...prev,
+                  { id: uid(), label: "", position: prev.length, type: 'securite' },
+                ])
+              }
+              style={{ ...smallBtn(T.primary, T.primaryBg), marginTop: 8 }}
+            >
+              + Ajouter un créneau sécurité
+            </button>
+          </div>
+
+          {/* Bouton sauvegarder global */}
           <button
             onClick={saveStandsSlots}
             disabled={saving}
@@ -281,7 +356,6 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
           >
             {saving ? "Enregistrement…" : "💾 Enregistrer stands & créneaux"}
           </button>
-        </div>
         </>
       )}
 

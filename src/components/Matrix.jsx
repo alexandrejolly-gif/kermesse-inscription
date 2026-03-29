@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { C, T } from "../styles/theme";
 import PersonBar from "./PersonBar";
 
-export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, onRemove, mobile }) {
+export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, onRemove, hasTimeConflict, mobile }) {
   const [activeTooltip, setActiveTooltip] = useState(null);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
 
   const getList = (sid, tid) => inscriptions.filter((i) => i.stand_id === sid && i.slot_id === tid);
   const isMine = (sid, tid) => inscriptions.some((i) => i.email === email && i.stand_id === sid && i.slot_id === tid);
-  const hasConflict = (tid) => inscriptions.some((i) => i.email === email && i.slot_id === tid);
+  const hasConflict = (tid) => inscriptions.some((i) => i.email === email && i.slot_id === tid) || (hasTimeConflict && hasTimeConflict(tid));
 
   return (
     <div style={{

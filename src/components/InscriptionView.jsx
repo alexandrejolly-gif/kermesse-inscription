@@ -126,17 +126,17 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
     return parseTimeslotLabel(slot.label, slot.type || 'normal');
   }, [parseTimeslotLabel]);
 
-  // Fonction pour détecter les conflits horaires entre créneaux
-  const hasTimeConflict = useCallback((newSlotId) => {
-    const newSlot = timeslots.find(t => t.id === newSlotId);
-    if (!newSlot) return false;
+  // Fonction pour vérifier si un slot chevauche les créneaux de l'utilisateur (pour désactivation visuelle)
+  const hasTimeConflictWithSlot = useCallback((slotId) => {
+    const slot = timeslots.find(t => t.id === slotId);
+    if (!slot) return false;
 
-    const newTimes = getSlotTimes(newSlot);
-    if (!newTimes.start || !newTimes.end) return false;
+    const slotTimes = getSlotTimes(slot);
+    if (!slotTimes.start || !slotTimes.end) return false;
 
-    const newStart = parseTime(newTimes.start);
-    const newEnd = parseTime(newTimes.end);
-    if (newStart === null || newEnd === null) return false;
+    const slotStart = parseTime(slotTimes.start);
+    const slotEnd = parseTime(slotTimes.end);
+    if (slotStart === null || slotEnd === null) return false;
 
     return localCart.some(ins => {
       const insSlot = timeslots.find(t => t.id === ins.slot_id);
@@ -149,8 +149,8 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       const insEnd = parseTime(insTimes.end);
       if (insStart === null || insEnd === null) return false;
 
-      // Chevauchement si : newStart < insEnd ET newEnd > insStart
-      return newStart < insEnd && newEnd > insStart;
+      // Chevauchement si : slotStart < insEnd ET slotEnd > insStart
+      return slotStart < insEnd && slotEnd > insStart;
     });
   }, [localCart, timeslots, parseTime, getSlotTimes]);
 
@@ -176,16 +176,7 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
       showToast("❌ Complet");
       return;
     }
-    // Vérifier les conflits horaires (entre tous les tableaux)
-    if (hasTimeConflict(slotId)) {
-      showToast("❌ Conflit horaire — vous avez déjà un créneau qui chevauche");
-      return;
-    }
-    // Si pas d'horaires définis, vérifier au moins le même slot_id
-    if (localCart.some((i) => i.slot_id === slotId)) {
-      showToast("❌ Vous êtes déjà inscrit·e sur ce créneau");
-      return;
-    }
+    // La vérification de conflit est gérée visuellement dans Matrix (pas de message d'erreur)
 
     const name = `${form.firstName.trim()} ${form.lastName.trim()}`;
     const slot = timeslots.find((t) => t.id === slotId);
@@ -360,6 +351,7 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
             email={currentEmail}
             onAdd={handleAdd}
             onRemove={handleRemove}
+            hasTimeConflict={hasTimeConflictWithSlot}
             mobile={mobile}
           />
         </>
@@ -384,6 +376,7 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
             email={currentEmail}
             onAdd={handleAdd}
             onRemove={handleRemove}
+            hasTimeConflict={hasTimeConflictWithSlot}
             mobile={mobile}
           />
         </>
