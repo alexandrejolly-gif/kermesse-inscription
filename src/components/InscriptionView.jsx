@@ -70,30 +70,64 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
     return hours * 60 + minutes;
   }, []);
 
+  // Fonction pour extraire les horaires depuis un label (ex: "14h-15h" -> {start: "14:00", end: "15:00"})
+  const parseTimeslotLabel = useCallback((label) => {
+    if (!label) return { start: null, end: null };
+    // Match formats: "14h-15h", "14h00-15h00", "14:00-15:00", "14h30-15h30"
+    const match = label.match(/(\d{1,2})h?(\d{2})?[-–](\d{1,2})h?(\d{2})?/);
+    if (!match) return { start: null, end: null };
+
+    const startHour = parseInt(match[1]);
+    const startMin = match[2] ? parseInt(match[2]) : 0;
+    const endHour = parseInt(match[3]);
+    const endMin = match[4] ? parseInt(match[4]) : 0;
+
+    return {
+      start: `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}`,
+      end: `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`
+    };
+  }, []);
+
+  // Fonction pour obtenir les horaires d'un slot (depuis start_time/end_time ou en parsant le label)
+  const getSlotTimes = useCallback((slot) => {
+    if (!slot) return { start: null, end: null };
+
+    // Priorité aux champs start_time/end_time s'ils existent
+    if (slot.start_time && slot.end_time) {
+      return { start: slot.start_time, end: slot.end_time };
+    }
+
+    // Sinon, parser le label
+    return parseTimeslotLabel(slot.label);
+  }, [parseTimeslotLabel]);
+
   // Fonction pour détecter les conflits horaires entre créneaux
   const hasTimeConflict = useCallback((newSlotId) => {
     const newSlot = timeslots.find(t => t.id === newSlotId);
-    if (!newSlot || !newSlot.start_time || !newSlot.end_time) {
-      // Si pas d'horaires définis, pas de conflit horaire possible
-      return false;
-    }
+    if (!newSlot) return false;
 
-    const newStart = parseTime(newSlot.start_time);
-    const newEnd = parseTime(newSlot.end_time);
+    const newTimes = getSlotTimes(newSlot);
+    if (!newTimes.start || !newTimes.end) return false;
+
+    const newStart = parseTime(newTimes.start);
+    const newEnd = parseTime(newTimes.end);
     if (newStart === null || newEnd === null) return false;
 
     return localCart.some(ins => {
       const insSlot = timeslots.find(t => t.id === ins.slot_id);
-      if (!insSlot || !insSlot.start_time || !insSlot.end_time) return false;
+      if (!insSlot) return false;
 
-      const insStart = parseTime(insSlot.start_time);
-      const insEnd = parseTime(insSlot.end_time);
+      const insTimes = getSlotTimes(insSlot);
+      if (!insTimes.start || !insTimes.end) return false;
+
+      const insStart = parseTime(insTimes.start);
+      const insEnd = parseTime(insTimes.end);
       if (insStart === null || insEnd === null) return false;
 
       // Chevauchement si : newStart < insEnd ET newEnd > insStart
       return newStart < insEnd && newEnd > insStart;
     });
-  }, [localCart, timeslots, parseTime]);
+  }, [localCart, timeslots, parseTime, getSlotTimes]);
 
   // Add inscription to local cart
   const handleAdd = useCallback((standId, slotId) => {
@@ -143,7 +177,7 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
 
     setLocalCart(prev => [...prev, newInscription]);
     showToast(`✅ ${stand.emoji} ${stand.label} · ${slot.label}`);
-  }, [currentEmail, form, stands, timeslots, allInscriptions, showToast, localCart, hasTimeConflict]);
+  }, [currentEmail, form, stands, timeslots, allInscriptions, showToast, hasTimeConflict]);
 
   // Remove inscription from local cart
   const handleRemove = useCallback((insId, standId, slotId) => {
