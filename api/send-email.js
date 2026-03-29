@@ -42,7 +42,7 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Kermesse <onboarding@resend.dev>",
+        from: "Kermesse Sainte-Marie <noreply@kermesse.pourquivoter35.fr>",
         to: [email],
         subject: `✅ Confirmation inscription — ${siteTitle || "Kermesse"}`,
         html,
