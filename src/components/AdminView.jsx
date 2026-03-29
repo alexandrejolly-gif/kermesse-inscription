@@ -405,24 +405,38 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
             onClick={async () => {
               setSaving(true);
               try {
-                // Reconstruire les slots depuis les sets actifs
+                // Fonction pour trouver un slot existant par label et type
+                const findExistingSlot = (label, type) => {
+                  return localSlots.find(s =>
+                    s.label === label &&
+                    (type === 'securite' ? s.type === 'securite' : s.type !== 'securite')
+                  );
+                };
+
+                // Reconstruire les slots depuis les sets actifs EN GARDANT LES IDs EXISTANTS
                 const standSlots = STAND_SLOTS
                   .filter(s => activeStandSlots.has(s.id))
-                  .map((s, i) => ({
-                    id: uid(),
-                    label: s.label,
-                    position: i,
-                    type: 'normal',
-                  }));
+                  .map((s, i) => {
+                    const existing = findExistingSlot(s.label, 'normal');
+                    return {
+                      id: existing ? existing.id : s.id, // GARDER l'ID existant !
+                      label: s.label,
+                      position: i,
+                      type: 'normal',
+                    };
+                  });
 
                 const secuSlots = SECU_SLOTS
                   .filter(s => activeSecuSlots.has(s.id))
-                  .map((s, i) => ({
-                    id: uid(),
-                    label: s.label,
-                    position: standSlots.length + i,
-                    type: 'securite',
-                  }));
+                  .map((s, i) => {
+                    const existing = findExistingSlot(s.label, 'securite');
+                    return {
+                      id: existing ? existing.id : s.id, // GARDER l'ID existant !
+                      label: s.label,
+                      position: standSlots.length + i,
+                      type: 'securite',
+                    };
+                  });
 
                 const allSlots = [...standSlots, ...secuSlots];
 
