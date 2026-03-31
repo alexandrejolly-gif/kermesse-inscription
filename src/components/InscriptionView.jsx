@@ -338,10 +338,10 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
           background: "#FFF7ED",
           border: "1px solid #FED7AA",
           borderRadius: mobile ? 12 : 14,
-          padding: mobile ? "12px 14px" : "14px 18px",
+          padding: mobile ? "8px 14px" : "10px 18px",
           marginBottom: mobile ? 8 : 12,
           fontSize: mobile ? 13 : 14,
-          lineHeight: 1.6,
+          lineHeight: 1.4,
           color: T.text,
           fontFamily: T.font,
         }}>
@@ -355,7 +355,7 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
           <h3 style={{
             fontSize: mobile ? 14 : 16,
             fontWeight: 800,
-            margin: mobile ? "16px 0 8px" : "20px 0 10px",
+            margin: mobile ? "10px 0 8px" : "14px 0 10px",
             color: T.text,
             fontFamily: T.font,
           }}>
@@ -380,7 +380,7 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
           <h3 style={{
             fontSize: mobile ? 14 : 16,
             fontWeight: 800,
-            margin: mobile ? "16px 0 8px" : "20px 0 10px",
+            margin: mobile ? "10px 0 8px" : "14px 0 10px",
             color: T.text,
             fontFamily: T.font,
           }}>
@@ -411,7 +411,7 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
       {/* Tableau des spectacles */}
       {spectacles && spectacles.length > 0 && (
         <div style={{
-          marginTop: mobile ? 12 : 20,
+          marginTop: mobile ? 8 : 12,
           background: "#fff",
           borderRadius: mobile ? 10 : 14,
           border: "1px solid #E7E5E0",

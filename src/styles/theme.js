@@ -179,7 +179,7 @@ export function renderMarkdown(text) {
     }
 
     elements.push(
-      createElement('p', { key: i, style: { margin: "0 0 4px" } },
+      createElement('p', { key: i, style: { margin: "0 0 2px" } },
         parts.length > 0 ? parts : line
       )
     );
