@@ -258,6 +258,16 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
         return { standLabel: stand?.label || "", standEmoji: stand?.emoji || "", slotLabel: slot?.label || "" };
       });
 
+      // Trier par créneau horaire croissant
+      myInscriptions.sort((a, b) => {
+        const parseSlot = (label) => {
+          const match = label.match(/^(\d{1,2})h(\d{2})?/);
+          if (!match) return 0;
+          return parseInt(match[1]) * 60 + (parseInt(match[2]) || 0);
+        };
+        return parseSlot(a.slotLabel) - parseSlot(b.slotLabel);
+      });
+
       try {
         const res = await fetch("/api/send-email", {
           method: "POST",
