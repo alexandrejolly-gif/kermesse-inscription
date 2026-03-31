@@ -4,6 +4,7 @@ import PersonBar from "./PersonBar";
 
 export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, onRemove, hasTimeConflict, mobile }) {
   const [activeTooltip, setActiveTooltip] = useState(null);
+  const [hoveredCell, setHoveredCell] = useState(null);
 
   useEffect(() => {
     if (!activeTooltip) return;
@@ -116,14 +117,20 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
                       {Array.from({ length: empty }).map((_, i) => {
                         const isFirst = i === 0;
                         const clickable = canJoin && isFirst;
+                        const cellKey = `${stand.id}-${ts.id}-${i}`;
+                        const isHovered = hoveredCell === cellKey;
                         return (
                           <div
                             key={`e${i}`}
                             onClick={clickable ? () => onAdd(stand.id, ts.id) : undefined}
+                            onMouseEnter={clickable ? () => setHoveredCell(cellKey) : undefined}
+                            onMouseLeave={clickable ? () => setHoveredCell(null) : undefined}
                             style={{
                               height: barH, borderRadius: mobile ? 4 : 5,
                               border: clickable
-                                ? `1.5px dashed ${C.joinable.border}`
+                                ? isHovered
+                                  ? `2px solid ${C.me.bg}`
+                                  : `1.5px dashed ${C.joinable.border}`
                                 : conflict && isFirst
                                   ? `1.5px dashed ${C.conflict.border}`
                                   : `1.5px dashed ${C.free.border}`,
@@ -131,12 +138,23 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
                               cursor: clickable ? "pointer" : "default",
                               transition: "all .2s",
                               opacity: clickable ? 1 : 0.4,
-                              background: clickable ? C.joinable.bg : "transparent",
+                              background: clickable
+                                ? isHovered
+                                  ? C.me.light
+                                  : C.joinable.bg
+                                : "transparent",
+                              transform: isHovered ? "scale(1.05)" : "scale(1)",
+                              boxShadow: isHovered ? `0 2px 8px ${C.me.glow}` : "none",
                             }}
                           >
                             <span style={{
-                              fontSize: mobile ? 8 : 9, fontWeight: 700,
-                              color: clickable ? C.joinable.text : C.conflict.text,
+                              fontSize: mobile ? 8 : 9, fontWeight: isHovered ? 800 : 700,
+                              color: clickable
+                                ? isHovered
+                                  ? C.me.bg
+                                  : C.joinable.text
+                                : C.conflict.text,
+                              transition: "all .2s",
                             }}>
                               {clickable
                                 ? (mobile ? "+" : "+ Vous")

@@ -408,6 +408,21 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
         mobile={mobile}
       />
 
+      <button
+        onClick={handleSubmit}
+        disabled={submitting}
+        style={{
+          ...btn(mc > 0, mobile),
+          opacity: submitting ? 0.5 : mc > 0 ? 1 : 0.7,
+        }}
+      >
+        {submitting
+          ? "Envoi en cours…"
+          : mc > 0
+            ? `✓ Valider mes ${mc} inscription${mc > 1 ? "s" : ""}`
+            : "Sélectionnez des créneaux"}
+      </button>
+
       {/* Tableau des spectacles */}
       {spectacles && spectacles.length > 0 && (
         <div style={{
@@ -533,21 +548,6 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
           </table>
         </div>
       )}
-
-      <button
-        onClick={handleSubmit}
-        disabled={submitting}
-        style={{
-          ...btn(mc > 0, mobile),
-          opacity: submitting ? 0.5 : mc > 0 ? 1 : 0.7,
-        }}
-      >
-        {submitting
-          ? "Envoi en cours…"
-          : mc > 0
-            ? `✓ Valider mes ${mc} inscription${mc > 1 ? "s" : ""}`
-            : "Sélectionnez des créneaux"}
-      </button>
     </>
   );
 }
