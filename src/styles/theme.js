@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createElement } from "react";
 
 /* ─── RESPONSIVE HOOK ─── */
 export function useResponsive() {
@@ -129,7 +129,7 @@ export function renderMarkdown(text) {
     const line = lines[i];
 
     if (!line.trim()) {
-      elements.push(<br key={i} />);
+      elements.push(createElement('br', { key: i }));
       continue;
     }
 
@@ -150,17 +150,23 @@ export function renderMarkdown(text) {
 
       if (match[2]) {
         // **bold**
-        parts.push(<strong key={`${i}-${key++}`} style={{ fontWeight: 800 }}>{match[2]}</strong>);
+        parts.push(createElement('strong', {
+          key: `${i}-${key++}`,
+          style: { fontWeight: 800 }
+        }, match[2]));
       } else if (match[3]) {
         // *italic*
-        parts.push(<em key={`${i}-${key++}`}>{match[3]}</em>);
+        parts.push(createElement('em', { key: `${i}-${key++}` }, match[3]));
       } else if (match[4] && match[5]) {
         // [text](url)
         parts.push(
-          <a key={`${i}-${key++}`} href={match[5]} target="_blank" rel="noopener noreferrer"
-            style={{ color: T.primary, fontWeight: 700, textDecoration: "underline" }}>
-            {match[4]}
-          </a>
+          createElement('a', {
+            key: `${i}-${key++}`,
+            href: match[5],
+            target: "_blank",
+            rel: "noopener noreferrer",
+            style: { color: T.primary, fontWeight: 700, textDecoration: "underline" }
+          }, match[4])
         );
       }
 
@@ -173,13 +179,13 @@ export function renderMarkdown(text) {
     }
 
     elements.push(
-      <p key={i} style={{ margin: "0 0 4px" }}>
-        {parts.length > 0 ? parts : line}
-      </p>
+      createElement('p', { key: i, style: { margin: "0 0 4px" } },
+        parts.length > 0 ? parts : line
+      )
     );
   }
 
-  return <>{elements}</>;
+  return createElement('div', null, ...elements);
 }
 
 /* ─── CSV EXPORT ─── */
