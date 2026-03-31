@@ -118,6 +118,70 @@ export function move(arr, from, to) {
   return a;
 }
 
+/* ─── MARKDOWN PARSER ─── */
+export function renderMarkdown(text) {
+  if (!text) return null;
+
+  const lines = text.split('\n');
+  const elements = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (!line.trim()) {
+      elements.push(<br key={i} />);
+      continue;
+    }
+
+    // Parse inline elements: **bold**, *italic*, [text](url)
+    const parts = [];
+    let remaining = line;
+    let key = 0;
+
+    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|\[(.+?)\]\((.+?)\))/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(remaining)) !== null) {
+      // Text before match
+      if (match.index > lastIndex) {
+        parts.push(remaining.slice(lastIndex, match.index));
+      }
+
+      if (match[2]) {
+        // **bold**
+        parts.push(<strong key={`${i}-${key++}`} style={{ fontWeight: 800 }}>{match[2]}</strong>);
+      } else if (match[3]) {
+        // *italic*
+        parts.push(<em key={`${i}-${key++}`}>{match[3]}</em>);
+      } else if (match[4] && match[5]) {
+        // [text](url)
+        parts.push(
+          <a key={`${i}-${key++}`} href={match[5]} target="_blank" rel="noopener noreferrer"
+            style={{ color: T.primary, fontWeight: 700, textDecoration: "underline" }}>
+            {match[4]}
+          </a>
+        );
+      }
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Remaining text after last match
+    if (lastIndex < remaining.length) {
+      parts.push(remaining.slice(lastIndex));
+    }
+
+    elements.push(
+      <p key={i} style={{ margin: "0 0 4px" }}>
+        {parts.length > 0 ? parts : line}
+      </p>
+    );
+  }
+
+  return <>{elements}</>;
+}
+
 /* ─── CSV EXPORT ─── */
 export function buildCSV(stands, timeslots, inscriptions) {
   const BOM = "\uFEFF";

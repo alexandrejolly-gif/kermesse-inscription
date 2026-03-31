@@ -20,6 +20,7 @@ export default function App() {
   const [cfg, setCfg] = useState(DEFAULT_CFG);
   const [stands, setStands] = useState([]);
   const [timeslots, setTimeslots] = useState([]);
+  const [spectacles, setSpectacles] = useState([]);
   const [inscriptions, setInscriptions] = useState([]);
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,16 +66,18 @@ export default function App() {
 
   // ─── Fetch all data
   const fetchAll = useCallback(async () => {
-    const [cfgRes, standsRes, slotsRes, insRes] = await Promise.all([
+    const [cfgRes, standsRes, slotsRes, spectaclesRes, insRes] = await Promise.all([
       supabase.from("ins_config").select("*").eq("id", "main").single(),
       supabase.from("ins_stands").select("*").order("position"),
       supabase.from("ins_timeslots").select("*").order("position"),
+      supabase.from("ins_spectacles").select("*").order("position"),
       supabase.from("ins_inscriptions").select("*").order("created_at"),
     ]);
 
     if (cfgRes.data) setCfg(cfgRes.data);
     if (standsRes.data) setStands(standsRes.data);
     if (slotsRes.data) setTimeslots(slotsRes.data);
+    if (spectaclesRes.data) setSpectacles(spectaclesRes.data);
     if (insRes.data) setInscriptions(insRes.data);
     setLoading(false);
   }, []);
@@ -82,6 +85,11 @@ export default function App() {
   const fetchInscriptions = useCallback(async () => {
     const { data } = await supabase.from("ins_inscriptions").select("*").order("created_at");
     if (data) setInscriptions(data);
+  }, []);
+
+  const fetchSpectacles = useCallback(async () => {
+    const { data } = await supabase.from("ins_spectacles").select("*").order("position");
+    if (data) setSpectacles(data);
   }, []);
 
   useEffect(() => {
@@ -126,6 +134,7 @@ export default function App() {
           <InscriptionView
             stands={stands}
             timeslots={timeslots}
+            spectacles={spectacles}
             inscriptions={inscriptions}
             cfg={cfg}
             showToast={showToast}
@@ -138,12 +147,15 @@ export default function App() {
             cfg={cfg}
             stands={stands}
             timeslots={timeslots}
+            spectacles={spectacles}
             inscriptions={inscriptions}
             setCfg={setCfg}
             setStands={setStands}
             setTimeslots={setTimeslots}
+            setSpectacles={setSpectacles}
             showToast={showToast}
             onRefresh={fetchAll}
+            onRefreshSpectacles={fetchSpectacles}
           />
         )}
       </main>

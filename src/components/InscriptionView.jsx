@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
 import { supabase } from "../lib/supabase";
-import { T, C, btn, uid, isEmail, isPhone, useResponsive } from "../styles/theme";
+import { T, C, btn, uid, isEmail, isPhone, useResponsive, renderMarkdown } from "../styles/theme";
 import IdentityForm from "./IdentityForm";
 import Matrix from "./Matrix";
 import MyRecap from "./MyRecap";
 
-export default function InscriptionView({ stands, timeslots, inscriptions, cfg, showToast, onRefresh }) {
+export default function InscriptionView({ stands, timeslots, spectacles, inscriptions, cfg, showToast, onRefresh }) {
   const { mobile } = useResponsive();
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
   const [errors, setErrors] = useState({});
@@ -332,6 +332,23 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
         mobile={mobile}
       />
 
+      {/* Zone info (texte markdown) */}
+      {cfg.info_text && (
+        <div style={{
+          background: "#FFF7ED",
+          border: "1px solid #FED7AA",
+          borderRadius: mobile ? 12 : 14,
+          padding: mobile ? "12px 14px" : "14px 18px",
+          marginBottom: mobile ? 8 : 12,
+          fontSize: mobile ? 13 : 14,
+          lineHeight: 1.6,
+          color: T.text,
+          fontFamily: T.font,
+        }}>
+          {renderMarkdown(cfg.info_text)}
+        </div>
+      )}
+
       {/* Tableau des stands normaux */}
       {normalStands.length > 0 && normalTimeslots.length > 0 && (
         <>
@@ -390,6 +407,132 @@ export default function InscriptionView({ stands, timeslots, inscriptions, cfg, 
         onRemove={handleRemove}
         mobile={mobile}
       />
+
+      {/* Tableau des spectacles */}
+      {spectacles && spectacles.length > 0 && (
+        <div style={{
+          marginTop: mobile ? 12 : 20,
+          background: "#fff",
+          borderRadius: mobile ? 10 : 14,
+          border: "1px solid #E7E5E0",
+          overflow: "hidden",
+        }}>
+          {/* Header */}
+          <div style={{
+            padding: mobile ? "10px 12px" : "12px 16px",
+            borderBottom: "1px solid #E7E5E0",
+            background: "#FDF4FF",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}>
+            <span style={{ fontSize: 18 }}>🎭</span>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: mobile ? 14 : 15, color: "#1C1917", fontFamily: T.font }}>
+                Spectacles des classes
+              </div>
+              <div style={{ fontSize: 11, color: "#78716C", fontFamily: T.font }}>
+                Agenda de la journée
+              </div>
+            </div>
+          </div>
+
+          {/* Tableau */}
+          <table style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontFamily: T.font,
+            fontSize: mobile ? 12 : 14,
+          }}>
+            <thead>
+              <tr style={{ background: "#FAF5FF" }}>
+                <th style={{
+                  padding: mobile ? "8px 6px" : "10px 12px",
+                  textAlign: "center",
+                  fontWeight: 700,
+                  fontSize: mobile ? 10 : 11,
+                  color: "#78716C",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}>
+                  Heure
+                </th>
+                <th style={{
+                  padding: mobile ? "8px 6px" : "10px 12px",
+                  textAlign: "center",
+                  fontWeight: 700,
+                  fontSize: mobile ? 10 : 11,
+                  color: "#78716C",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}>
+                  Classe
+                </th>
+                <th style={{
+                  padding: mobile ? "8px 6px" : "10px 12px",
+                  textAlign: "left",
+                  fontWeight: 700,
+                  fontSize: mobile ? 10 : 11,
+                  color: "#78716C",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}>
+                  Spectacle
+                </th>
+                <th style={{
+                  padding: mobile ? "8px 6px" : "10px 12px",
+                  textAlign: "center",
+                  fontWeight: 700,
+                  fontSize: mobile ? 10 : 11,
+                  color: "#78716C",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}>
+                  Enseignant·e
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {spectacles.map((s, i) => (
+                <tr key={s.id} style={{
+                  borderBottom: "1px solid #E7E5E0",
+                  background: i % 2 === 0 ? "#fff" : "#FAFAF7",
+                }}>
+                  <td style={{
+                    padding: mobile ? "8px 8px" : "10px 14px",
+                    fontWeight: 800,
+                    color: "#7C3AED",
+                    textAlign: "center",
+                    whiteSpace: "nowrap",
+                  }}>
+                    {s.heure}
+                  </td>
+                  <td style={{
+                    padding: mobile ? "8px 6px" : "10px 12px",
+                    fontWeight: 700,
+                    textAlign: "center",
+                  }}>
+                    {s.classe}
+                  </td>
+                  <td style={{
+                    padding: mobile ? "8px 6px" : "10px 12px",
+                    fontWeight: 600,
+                  }}>
+                    {s.titre}
+                  </td>
+                  <td style={{
+                    padding: mobile ? "8px 6px" : "10px 12px",
+                    color: "#78716C",
+                    textAlign: "center",
+                  }}>
+                    {s.enseignant}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <button
         onClick={handleSubmit}

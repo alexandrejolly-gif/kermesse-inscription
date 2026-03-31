@@ -6,6 +6,7 @@ const adminTabs = [
   { id: "stands", icon: "🏪", label: "Stands" },
   { id: "slots", icon: "⏰", label: "Créneaux" },
   { id: "general", icon: "⚙️", label: "Général" },
+  { id: "spectacles", icon: "🎭", label: "Spectacles" },
   { id: "inscriptions", icon: "👥", label: "Inscriptions" },
 ];
 
@@ -22,7 +23,7 @@ for (let h = 8; h < 20; h++) {
   if (h < 20) SECU_SLOTS.push({ id: `${h}h30`, label: `${h}h30` });
 }
 
-export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg, setStands, setTimeslots, showToast, onRefresh }) {
+export default function AdminView({ cfg, stands, timeslots, spectacles, inscriptions, setCfg, setStands, setTimeslots, setSpectacles, showToast, onRefresh, onRefreshSpectacles }) {
   const { mobile } = useResponsive();
   const [authed, setAuthed] = useState(false);
   const [pw, setPw] = useState("");
@@ -32,6 +33,7 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
   // Local editable copies
   const [localStands, setLocalStands] = useState(stands);
   const [localSlots, setLocalSlots] = useState(timeslots);
+  const [localSpectacles, setLocalSpectacles] = useState(spectacles);
   const [localCfg, setLocalCfg] = useState(cfg);
 
   // Créneaux actifs (pour la grille de toggle)
@@ -42,6 +44,7 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
   useEffect(() => {
     setLocalStands(stands);
     setLocalSlots(timeslots);
+    setLocalSpectacles(spectacles);
     setLocalCfg(cfg);
 
     // Initialiser les créneaux actifs depuis timeslots
@@ -58,7 +61,7 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
 
     setActiveStandSlots(standSet);
     setActiveSecuSlots(secuSet);
-  }, [stands, timeslots, cfg]);
+  }, [stands, timeslots, spectacles, cfg]);
 
   // Auth
   if (!authed) {
@@ -132,6 +135,37 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
       if (!res.ok) throw new Error(await res.text());
       setCfg(localCfg);
       showToast("✅ Configuration enregistrée");
+    } catch (err) {
+      showToast("❌ Erreur : " + err.message);
+    }
+    setSaving(false);
+  };
+
+  // ─── Save spectacles
+  const saveSpectacles = async () => {
+    setSaving(true);
+    try {
+      // Tri automatique par heure
+      const sorted = [...localSpectacles].sort((a, b) => {
+        const toMin = (h) => {
+          const match = h.match(/^(\d{1,2})h(\d{2})?$/);
+          if (!match) return 999;
+          return parseInt(match[1]) * 60 + (parseInt(match[2]) || 0);
+        };
+        return toMin(a.heure) - toMin(b.heure);
+      });
+
+      // Recalculer les positions
+      sorted.forEach((s, i) => s.position = i);
+
+      const res = await fetch("/api/save-spectacles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spectacles: sorted }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      showToast("✅ Spectacles enregistrés");
+      onRefreshSpectacles();
     } catch (err) {
       showToast("❌ Erreur : " + err.message);
     }
@@ -490,6 +524,20 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
               />
             </div>
             <div>
+              <label style={lbl(mobile)}>Texte d'information</label>
+              <div style={{ fontSize: 10, color: T.hint, marginBottom: 3, fontFamily: T.font }}>
+                Affiché sous le formulaire · Supporte **gras**, *italique*, [liens](url) et retours à la ligne
+              </div>
+              <textarea
+                rows={5}
+                value={localCfg.info_text || ""}
+                onChange={(e) => setLocalCfg((c) => ({ ...c, info_text: e.target.value }))}
+                placeholder="Bienvenue à la kermesse ! **Pensez à arriver 15 min avant** votre créneau.
+Plus d'infos sur [le site de l'école](https://...)"
+                style={{ ...inputBase(mobile), resize: "vertical" }}
+              />
+            </div>
+            <div>
               <label style={lbl(mobile)}>Mot de passe admin</label>
               <input
                 value={localCfg.admin_password}
@@ -504,6 +552,201 @@ export default function AdminView({ cfg, stands, timeslots, inscriptions, setCfg
             style={{ ...btn(true, mobile), background: T.primary, opacity: saving ? 0.5 : 1 }}
           >
             {saving ? "Enregistrement…" : "💾 Enregistrer"}
+          </button>
+        </div>
+      )}
+
+      {/* ─── SPECTACLES TAB ─── */}
+      {tab === "spectacles" && (
+        <div style={card(mobile)}>
+          <div style={{ marginBottom: 12 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 2px", fontFamily: T.font }}>
+              🎭 Spectacles des classes
+            </h3>
+            <p style={{ fontSize: 11, color: T.hint, margin: 0, fontFamily: T.font }}>
+              Agenda de la journée · Les spectacles sont affichés aux parents sur la page d'accueil
+            </p>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {localSpectacles.map((s, i) => (
+              <div key={s.id} style={{
+                display: "flex",
+                gap: mobile ? 4 : 6,
+                alignItems: "center",
+                padding: mobile ? "6px 8px" : "8px 10px",
+                background: T.surfaceAlt,
+                borderRadius: 9,
+                border: `1px solid ${T.border}`,
+              }}>
+                {/* Heure */}
+                <input
+                  type="text"
+                  value={s.heure}
+                  onChange={(e) =>
+                    setLocalSpectacles((prev) =>
+                      prev.map((x) => (x.id === s.id ? { ...x, heure: e.target.value } : x))
+                    )
+                  }
+                  placeholder="10h00"
+                  style={{
+                    width: mobile ? 50 : 60,
+                    padding: mobile ? "5px 6px" : "6px 8px",
+                    borderRadius: 6,
+                    border: `1px solid ${T.border}`,
+                    fontSize: mobile ? 11 : 12,
+                    fontWeight: 700,
+                    fontFamily: T.font,
+                    background: "#fff",
+                    outline: "none",
+                  }}
+                />
+
+                {/* Classe */}
+                <input
+                  type="text"
+                  value={s.classe}
+                  onChange={(e) =>
+                    setLocalSpectacles((prev) =>
+                      prev.map((x) => (x.id === s.id ? { ...x, classe: e.target.value } : x))
+                    )
+                  }
+                  placeholder="PS"
+                  style={{
+                    width: mobile ? 40 : 50,
+                    padding: mobile ? "5px 6px" : "6px 8px",
+                    borderRadius: 6,
+                    border: `1px solid ${T.border}`,
+                    fontSize: mobile ? 11 : 12,
+                    fontWeight: 600,
+                    fontFamily: T.font,
+                    background: "#fff",
+                    outline: "none",
+                  }}
+                />
+
+                {/* Spectacle */}
+                <input
+                  type="text"
+                  value={s.titre}
+                  onChange={(e) =>
+                    setLocalSpectacles((prev) =>
+                      prev.map((x) => (x.id === s.id ? { ...x, titre: e.target.value } : x))
+                    )
+                  }
+                  placeholder="Les petits poissons"
+                  style={{
+                    flex: 1,
+                    padding: mobile ? "5px 6px" : "6px 8px",
+                    borderRadius: 6,
+                    border: `1px solid ${T.border}`,
+                    fontSize: mobile ? 11 : 12,
+                    fontWeight: 600,
+                    fontFamily: T.font,
+                    background: "#fff",
+                    outline: "none",
+                  }}
+                />
+
+                {/* Enseignant */}
+                <input
+                  type="text"
+                  value={s.enseignant}
+                  onChange={(e) =>
+                    setLocalSpectacles((prev) =>
+                      prev.map((x) => (x.id === s.id ? { ...x, enseignant: e.target.value } : x))
+                    )
+                  }
+                  placeholder="Mme Dupont"
+                  style={{
+                    width: mobile ? 70 : 100,
+                    padding: mobile ? "5px 6px" : "6px 8px",
+                    borderRadius: 6,
+                    border: `1px solid ${T.border}`,
+                    fontSize: mobile ? 11 : 12,
+                    fontWeight: 600,
+                    fontFamily: T.font,
+                    background: "#fff",
+                    outline: "none",
+                  }}
+                />
+
+                {/* Actions */}
+                <div style={{ display: "flex", gap: 2 }}>
+                  <button
+                    onClick={() => setLocalSpectacles((prev) => move(prev, i, i - 1))}
+                    disabled={i === 0}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: i === 0 ? "default" : "pointer",
+                      fontSize: mobile ? 12 : 14,
+                      padding: 2,
+                      lineHeight: 1,
+                      opacity: i === 0 ? 0.3 : 1,
+                    }}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    onClick={() => setLocalSpectacles((prev) => move(prev, i, i + 1))}
+                    disabled={i === localSpectacles.length - 1}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: i === localSpectacles.length - 1 ? "default" : "pointer",
+                      fontSize: mobile ? 12 : 14,
+                      padding: 2,
+                      lineHeight: 1,
+                      opacity: i === localSpectacles.length - 1 ? 0.3 : 1,
+                    }}
+                  >
+                    ↓
+                  </button>
+                  <button
+                    onClick={() => setLocalSpectacles((prev) => prev.filter((x) => x.id !== s.id))}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: mobile ? 12 : 14,
+                      padding: 2,
+                      lineHeight: 1,
+                      color: "#DC2626",
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={() =>
+              setLocalSpectacles((prev) => [
+                ...prev,
+                {
+                  id: uid(),
+                  heure: "",
+                  classe: "",
+                  titre: "",
+                  enseignant: "",
+                  position: prev.length,
+                },
+              ])
+            }
+            style={{ ...smallBtn("#7C3AED", "#FDF4FF"), marginTop: 8 }}
+          >
+            🎭 + Ajouter un spectacle
+          </button>
+
+          <button
+            onClick={saveSpectacles}
+            disabled={saving}
+            style={{ ...btn(true, mobile), background: T.primary, opacity: saving ? 0.5 : 1 }}
+          >
+            {saving ? "Enregistrement…" : "💾 Enregistrer les spectacles"}
           </button>
         </div>
       )}
