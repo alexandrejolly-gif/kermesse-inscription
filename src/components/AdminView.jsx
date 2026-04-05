@@ -211,14 +211,14 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
     URL.revokeObjectURL(url);
   };
 
-  // ─── Export PDF (tout sur 1 page A4)
+  // ─── Export PDF (joli et propre sur 1 page A4)
   const exportPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
-    // Titre compact
-    doc.setFontSize(12);
-    doc.setFont(undefined, "bold");
-    doc.text(cfg.title || "Kermesse", 14, 10);
+    // Titre élégant
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(cfg.title || "Kermesse", 148, 12, { align: "center" });
 
     // Séparer les stands et créneaux par type
     const normalStands = stands.filter(s => s.type !== 'securite');
@@ -226,66 +226,104 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
     const normalTimeslots = timeslots.filter(t => t.type !== 'securite');
     const securiteTimeslots = timeslots.filter(t => t.type === 'securite');
 
-    let yPos = 16;
+    let yPos = 20;
 
-    // Tableau 1 : Stands de la kermesse (compact)
+    // Tableau 1 : Stands de la kermesse
     if (normalStands.length > 0 && normalTimeslots.length > 0) {
-      doc.setFontSize(10);
-      doc.setFont(undefined, "bold");
-      doc.text("🎪 Stands de la kermesse", 14, yPos);
-      yPos += 4;
-
-      const headers = ["Stand", ...normalTimeslots.map(t => t.label)];
+      const headers = ["STAND", ...normalTimeslots.map(t => t.label.toUpperCase())];
       const rows = normalStands.map(stand => {
-        const row = [`${stand.emoji} ${stand.label}`];
+        const row = [stand.label]; // Sans emoji
         normalTimeslots.forEach(slot => {
           const inscs = inscriptions.filter(i => i.stand_id === stand.id && i.slot_id === slot.id);
-          const names = inscs.map(i => i.name).join("\n");
-          row.push(names || "");
+          const names = inscs.map(i => i.name).join(", ");
+          row.push(names || "-");
         });
         return row;
       });
+
+      // Calculer largeur uniforme pour les colonnes de créneaux
+      const pageWidth = 297; // A4 landscape
+      const margins = 20;
+      const availableWidth = pageWidth - (2 * margins);
+      const standColWidth = 45;
+      const slotColWidth = (availableWidth - standColWidth) / normalTimeslots.length;
 
       autoTable(doc, {
         startY: yPos,
         head: [headers],
         body: rows,
-        theme: "grid",
-        styles: { fontSize: 6, cellPadding: 1, font: "helvetica", overflow: 'linebreak' },
-        headStyles: { fillColor: [249, 115, 22], textColor: 255, fontStyle: "bold", fontSize: 7 },
-        columnStyles: { 0: { fontStyle: "bold", cellWidth: 30 } },
-        margin: { left: 14, right: 14 },
-        didDrawPage: (data) => { yPos = data.cursor.y + 6; }
+        theme: "striped",
+        styles: {
+          fontSize: 7,
+          cellPadding: 2.5,
+          font: "helvetica",
+          overflow: "ellipsize",
+          cellWidth: "wrap"
+        },
+        headStyles: {
+          fillColor: [249, 115, 22],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: 8,
+          halign: "center"
+        },
+        columnStyles: {
+          0: { fontStyle: "bold", cellWidth: standColWidth, halign: "left" },
+          ...Object.fromEntries(
+            normalTimeslots.map((_, i) => [i + 1, { cellWidth: slotColWidth, halign: "center" }])
+          )
+        },
+        margin: { left: margins, right: margins },
+        didDrawPage: (data) => { yPos = data.cursor.y + 8; }
       });
     }
 
-    // Tableau 2 : Sécurisation (compact, pas de nouvelle page)
+    // Tableau 2 : Sécurisation
     if (securiteStands.length > 0 && securiteTimeslots.length > 0) {
-      doc.setFontSize(10);
-      doc.setFont(undefined, "bold");
-      doc.text("🔒 Sécurisation de l'accès au site", 14, yPos);
-      yPos += 4;
-
-      const headers = ["Stand", ...securiteTimeslots.map(t => t.label)];
+      const headers = ["STAND", ...securiteTimeslots.map(t => t.label.toUpperCase())];
       const rows = securiteStands.map(stand => {
-        const row = [`${stand.emoji} ${stand.label}`];
+        const row = [stand.label]; // Sans emoji
         securiteTimeslots.forEach(slot => {
           const inscs = inscriptions.filter(i => i.stand_id === stand.id && i.slot_id === slot.id);
-          const names = inscs.map(i => i.name).join("\n");
-          row.push(names || "");
+          const names = inscs.map(i => i.name).join(", ");
+          row.push(names || "-");
         });
         return row;
       });
+
+      // Calculer largeur uniforme pour les colonnes de créneaux
+      const pageWidth = 297;
+      const margins = 20;
+      const availableWidth = pageWidth - (2 * margins);
+      const standColWidth = 45;
+      const slotColWidth = (availableWidth - standColWidth) / securiteTimeslots.length;
 
       autoTable(doc, {
         startY: yPos,
         head: [headers],
         body: rows,
-        theme: "grid",
-        styles: { fontSize: 6, cellPadding: 1, font: "helvetica", overflow: 'linebreak' },
-        headStyles: { fillColor: [124, 58, 237], textColor: 255, fontStyle: "bold", fontSize: 7 },
-        columnStyles: { 0: { fontStyle: "bold", cellWidth: 30 } },
-        margin: { left: 14, right: 14 }
+        theme: "striped",
+        styles: {
+          fontSize: 7,
+          cellPadding: 2.5,
+          font: "helvetica",
+          overflow: "ellipsize",
+          cellWidth: "wrap"
+        },
+        headStyles: {
+          fillColor: [124, 58, 237],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: 8,
+          halign: "center"
+        },
+        columnStyles: {
+          0: { fontStyle: "bold", cellWidth: standColWidth, halign: "left" },
+          ...Object.fromEntries(
+            securiteTimeslots.map((_, i) => [i + 1, { cellWidth: slotColWidth, halign: "center" }])
+          )
+        },
+        margin: { left: margins, right: margins }
       });
     }
 
