@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { T, inputBase, lbl, btn, uid, move, buildCSV, useResponsive, card } from "../styles/theme";
 import EditableItem from "./EditableItem";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const adminTabs = [
   { id: "stands", icon: "🏪", label: "Stands" },
@@ -207,6 +209,93 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
     a.download = "inscriptions-kermesse.csv";
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // ─── Export PDF
+  const exportPDF = () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+    // Titre
+    doc.setFontSize(18);
+    doc.setFont(undefined, "bold");
+    doc.text(cfg.title || "Kermesse", 14, 15);
+
+    // Séparer les stands et créneaux par type
+    const normalStands = stands.filter(s => s.type !== 'securite');
+    const securiteStands = stands.filter(s => s.type === 'securite');
+    const normalTimeslots = timeslots.filter(t => t.type !== 'securite');
+    const securiteTimeslots = timeslots.filter(t => t.type === 'securite');
+
+    let yPos = 25;
+
+    // Tableau 1 : Stands de la kermesse
+    if (normalStands.length > 0 && normalTimeslots.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont(undefined, "bold");
+      doc.text("🎪 Stands de la kermesse", 14, yPos);
+      yPos += 5;
+
+      // Préparer les données
+      const headers = ["Stand", ...normalTimeslots.map(t => t.label)];
+      const rows = normalStands.map(stand => {
+        const row = [`${stand.emoji} ${stand.label}`];
+        normalTimeslots.forEach(slot => {
+          const inscs = inscriptions.filter(i => i.stand_id === stand.id && i.slot_id === slot.id);
+          const names = inscs.map(i => i.name).join("\n");
+          row.push(names || "");
+        });
+        return row;
+      });
+
+      doc.autoTable({
+        startY: yPos,
+        head: [headers],
+        body: rows,
+        theme: "grid",
+        styles: { fontSize: 8, cellPadding: 2, font: "helvetica" },
+        headStyles: { fillColor: [249, 115, 22], textColor: 255, fontStyle: "bold" },
+        columnStyles: { 0: { fontStyle: "bold", cellWidth: 40 } },
+        didDrawPage: (data) => { yPos = data.cursor.y + 10; }
+      });
+    }
+
+    // Tableau 2 : Sécurisation
+    if (securiteStands.length > 0 && securiteTimeslots.length > 0) {
+      // Nouvelle page si nécessaire
+      if (yPos > 150) {
+        doc.addPage();
+        yPos = 15;
+      }
+
+      doc.setFontSize(14);
+      doc.setFont(undefined, "bold");
+      doc.text("🔒 Sécurisation de l'accès au site", 14, yPos);
+      yPos += 5;
+
+      const headers = ["Stand", ...securiteTimeslots.map(t => t.label)];
+      const rows = securiteStands.map(stand => {
+        const row = [`${stand.emoji} ${stand.label}`];
+        securiteTimeslots.forEach(slot => {
+          const inscs = inscriptions.filter(i => i.stand_id === stand.id && i.slot_id === slot.id);
+          const names = inscs.map(i => i.name).join("\n");
+          row.push(names || "");
+        });
+        return row;
+      });
+
+      doc.autoTable({
+        startY: yPos,
+        head: [headers],
+        body: rows,
+        theme: "grid",
+        styles: { fontSize: 8, cellPadding: 2, font: "helvetica" },
+        headStyles: { fillColor: [124, 58, 237], textColor: 255, fontStyle: "bold" },
+        columnStyles: { 0: { fontStyle: "bold", cellWidth: 40 } }
+      });
+    }
+
+    // Sauvegarder le PDF
+    doc.save(`inscriptions-${cfg.title?.replace(/\s+/g, '-') || 'kermesse'}.pdf`);
   };
 
   // ─── Group inscriptions by email
@@ -795,9 +884,12 @@ Plus d'infos sur [le site de l'école](https://...)"
             <h3 style={{ fontSize: 14, fontWeight: 800, margin: 0, fontFamily: T.font }}>
               👥 Inscriptions ({insCount})
             </h3>
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               <button onClick={exportCSV} style={smallBtn("#065F46", "#F0FDF4")}>
                 📥 Exporter CSV
+              </button>
+              <button onClick={exportPDF} style={smallBtn("#9333EA", "#FAF5FF")}>
+                📄 Exporter PDF
               </button>
               <button onClick={resetAll} style={smallBtn("#991B1B", "#FEF2F2")}>
                 🗑 Tout supprimer
