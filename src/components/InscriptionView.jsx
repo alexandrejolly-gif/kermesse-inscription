@@ -19,7 +19,17 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
   const currentEmail = form.email.trim().toLowerCase();
 
   // Vérifier si les modifications sont autorisées
-  const canModify = cfg.allow_modifications !== false || !editingHint;
+  // Ne peut PAS modifier si : allow_modifications === false ET utilisateur a déjà des inscriptions
+  const canModify = !(cfg?.allow_modifications === false && editingHint === true);
+
+  // Debug log (à retirer plus tard)
+  if (editingHint) {
+    console.log('DEBUG canModify:', {
+      allow_modifications: cfg?.allow_modifications,
+      editingHint,
+      canModify
+    });
+  }
 
   // Email blur: find existing inscriptions
   const handleEmailBlur = useCallback(() => {

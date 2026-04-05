@@ -29,7 +29,6 @@ export default async function handler(req, res) {
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
-        <p style="color:#78716C;font-size:13px">Vous pouvez modifier vos inscriptions à tout moment en retournant sur le site avec votre adresse email.</p>
       </div>
     </div>
   `;
