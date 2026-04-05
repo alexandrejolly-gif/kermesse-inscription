@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { T, inputBase, lbl, btn, uid, move, buildCSV, useResponsive, card } from "../styles/theme";
 import EditableItem from "./EditableItem";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 const adminTabs = [
   { id: "stands", icon: "🏪", label: "Stands" },
@@ -888,7 +888,7 @@ Plus d'infos sur [le site de l'école](https://...)"
               <button onClick={exportCSV} style={smallBtn("#065F46", "#F0FDF4")}>
                 📥 Exporter CSV
               </button>
-              <button onClick={exportPDF} style={smallBtn("#9333EA", "#FAF5FF")}>
+              <button onClick={exportPDF} style={smallBtn("#1E40AF", "#EFF6FF")}>
                 📄 Exporter PDF
               </button>
               <button onClick={resetAll} style={smallBtn("#991B1B", "#FEF2F2")}>
