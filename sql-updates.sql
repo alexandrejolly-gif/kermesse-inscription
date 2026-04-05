@@ -1,6 +1,9 @@
 -- Ajouter le champ info_text à ins_config
 ALTER TABLE ins_config ADD COLUMN IF NOT EXISTS info_text TEXT DEFAULT '';
 
+-- Ajouter le champ allow_modifications à ins_config
+ALTER TABLE ins_config ADD COLUMN IF NOT EXISTS allow_modifications BOOLEAN DEFAULT true;
+
 -- Créer la table ins_spectacles
 CREATE TABLE IF NOT EXISTS ins_spectacles (
   id TEXT PRIMARY KEY,

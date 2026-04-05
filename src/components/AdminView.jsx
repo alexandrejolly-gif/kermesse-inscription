@@ -538,6 +538,43 @@ Plus d'infos sur [le site de l'école](https://...)"
               />
             </div>
             <div>
+              <label style={lbl(mobile)}>Autoriser les modifications</label>
+              <div style={{ fontSize: 10, color: T.hint, marginBottom: 6, fontFamily: T.font }}>
+                Permettre aux parents de modifier leurs inscriptions après validation
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button
+                  onClick={() => setLocalCfg((c) => ({ ...c, allow_modifications: !c.allow_modifications }))}
+                  style={{
+                    width: 50,
+                    height: 26,
+                    borderRadius: 13,
+                    border: "none",
+                    cursor: "pointer",
+                    background: localCfg.allow_modifications ? "#10B981" : "#D1D5DB",
+                    position: "relative",
+                    transition: "background .2s",
+                    padding: 0,
+                  }}
+                >
+                  <div style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: "50%",
+                    background: "#fff",
+                    position: "absolute",
+                    top: 2,
+                    left: localCfg.allow_modifications ? 26 : 2,
+                    transition: "left .2s",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                  }} />
+                </button>
+                <span style={{ fontSize: 12, fontWeight: 700, color: localCfg.allow_modifications ? "#10B981" : T.muted, fontFamily: T.font }}>
+                  {localCfg.allow_modifications ? "Activé" : "Désactivé"}
+                </span>
+              </div>
+            </div>
+            <div>
               <label style={lbl(mobile)}>Mot de passe admin</label>
               <input
                 value={localCfg.admin_password}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { C, T } from "../styles/theme";
 import PersonBar from "./PersonBar";
 
-export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, onRemove, hasTimeConflict, mobile }) {
+export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, onRemove, hasTimeConflict, canModify = true, mobile }) {
   const [activeTooltip, setActiveTooltip] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
 
@@ -111,12 +111,13 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
                           slotId={ts.id}
                           activeTooltip={activeTooltip}
                           setActiveTooltip={setActiveTooltip}
+                          canModify={canModify}
                           mobile={mobile}
                         />
                       ))}
                       {Array.from({ length: empty }).map((_, i) => {
                         const isFirst = i === 0;
-                        const clickable = canJoin && isFirst;
+                        const clickable = canJoin && isFirst && canModify;
                         const cellKey = `${stand.id}-${ts.id}-${i}`;
                         const isHovered = hoveredCell === cellKey;
                         return (

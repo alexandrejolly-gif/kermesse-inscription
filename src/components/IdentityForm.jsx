@@ -1,6 +1,6 @@
 import { inputBase, lbl, T } from "../styles/theme";
 
-export default function IdentityForm({ form, setForm, errors, onEmailBlur, editingHint, mobile }) {
+export default function IdentityForm({ form, setForm, errors, onEmailBlur, editingHint, mobile, cfg }) {
   const iStyle = (field) => ({
     ...inputBase(mobile),
     borderColor: errors[field] ? "#FCA5A5" : T.border,
@@ -59,8 +59,17 @@ export default function IdentityForm({ form, setForm, errors, onEmailBlur, editi
         </div>
       </div>
       {editingHint && (
-        <p style={{ color: "#059669", fontSize: 11, fontWeight: 700, marginTop: 6, marginBottom: 0 }}>
-          ✏️ Inscriptions retrouvées — modifiez et re-soumettez.
+        <p style={{
+          color: cfg?.allow_modifications ? "#059669" : "#DC2626",
+          fontSize: 11,
+          fontWeight: 700,
+          marginTop: 6,
+          marginBottom: 0,
+          lineHeight: 1.4,
+        }}>
+          {cfg?.allow_modifications
+            ? "✏️ Inscriptions retrouvées - modifiez et re-soumettez."
+            : "⚠️ Inscriptions retrouvées. Les modifications sont désactivées. En cas de désistement, contactez directement les organisateurs."}
         </p>
       )}
       {Object.values(errors).some(Boolean) && (

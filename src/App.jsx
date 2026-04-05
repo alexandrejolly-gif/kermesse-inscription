@@ -12,6 +12,7 @@ const DEFAULT_CFG = {
   icon: "🎪",
   header_image: "",
   admin_password: "admin123",
+  allow_modifications: true,
 };
 
 export default function App() {

@@ -1,6 +1,6 @@
 import { C } from "../styles/theme";
 
-export default function MyRecap({ inscriptions, email, stands, timeslots, onRemove, mobile }) {
+export default function MyRecap({ inscriptions, email, stands, timeslots, onRemove, canModify = true, mobile }) {
   const mine = inscriptions.filter((i) => i.email === email);
   if (!mine.length) return null;
 
@@ -32,12 +32,14 @@ export default function MyRecap({ inscriptions, email, stands, timeslots, onRemo
               }}>
                 {slot.label}
               </span>
-              <span
-                onClick={() => onRemove(ins.id, ins.stand_id, ins.slot_id)}
-                style={{ cursor: "pointer", fontSize: 12, opacity: 0.7, marginLeft: 1 }}
-              >
-                ✕
-              </span>
+              {canModify && (
+                <span
+                  onClick={() => onRemove(ins.id, ins.stand_id, ins.slot_id)}
+                  style={{ cursor: "pointer", fontSize: 12, opacity: 0.7, marginLeft: 1 }}
+                >
+                  ✕
+                </span>
+              )}
             </div>
           );
         })}

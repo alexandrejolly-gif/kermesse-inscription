@@ -18,6 +18,9 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
 
   const currentEmail = form.email.trim().toLowerCase();
 
+  // Vérifier si les modifications sont autorisées
+  const canModify = cfg.allow_modifications !== false || !editingHint;
+
   // Email blur: find existing inscriptions
   const handleEmailBlur = useCallback(() => {
     if (!currentEmail || !isEmail(currentEmail)) {
@@ -156,6 +159,12 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
 
   // Add inscription to local cart
   const handleAdd = useCallback((standId, slotId) => {
+    // Bloquer si modifications désactivées et utilisateur a déjà des inscriptions
+    if (!canModify) {
+      showToast("❌ Modifications désactivées - contactez les organisateurs");
+      return;
+    }
+
     // Vérifier que tous les champs obligatoires sont remplis
     if (!form.firstName.trim() || !form.lastName.trim() || !currentEmail || !form.phone.trim()) {
       showToast("❌ Remplissez tous les champs (prénom, nom, email, téléphone)");
@@ -193,16 +202,22 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
 
     setLocalCart(prev => [...prev, newInscription]);
     showToast(`✅ ${stand.emoji} ${stand.label} · ${slot.label}`);
-  }, [currentEmail, form, stands, timeslots, allInscriptions, showToast]);
+  }, [currentEmail, form, stands, timeslots, allInscriptions, showToast, canModify]);
 
   // Remove inscription from local cart
   const handleRemove = useCallback((insId, standId, slotId) => {
+    // Bloquer si modifications désactivées et utilisateur a déjà des inscriptions
+    if (!canModify) {
+      showToast("❌ Modifications désactivées - contactez les organisateurs");
+      return;
+    }
+
     const stand = stands.find((s) => s.id === standId);
     const slot = timeslots.find((t) => t.id === slotId);
 
     setLocalCart(prev => prev.filter(i => i.id !== insId));
     showToast(`❌ Retrait — ${stand?.emoji || ""} ${slot?.label || ""}`);
-  }, [stands, timeslots, showToast]);
+  }, [stands, timeslots, showToast, canModify]);
 
   // Submit / Validate - save to Supabase
   const handleSubmit = async () => {
@@ -340,6 +355,7 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
         onEmailBlur={handleEmailBlur}
         editingHint={editingHint}
         mobile={mobile}
+        cfg={cfg}
       />
 
       {/* Zone info (texte markdown) */}
@@ -379,6 +395,7 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
             onAdd={handleAdd}
             onRemove={handleRemove}
             hasTimeConflict={hasTimeConflictWithSlot}
+            canModify={canModify}
             mobile={mobile}
           />
         </>
@@ -404,6 +421,7 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
             onAdd={handleAdd}
             onRemove={handleRemove}
             hasTimeConflict={hasTimeConflictWithSlot}
+            canModify={canModify}
             mobile={mobile}
           />
         </>
@@ -415,23 +433,26 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
         stands={stands}
         timeslots={timeslots}
         onRemove={handleRemove}
+        canModify={canModify}
         mobile={mobile}
       />
 
-      <button
-        onClick={handleSubmit}
-        disabled={submitting}
-        style={{
-          ...btn(mc > 0, mobile),
-          opacity: submitting ? 0.5 : mc > 0 ? 1 : 0.7,
-        }}
-      >
-        {submitting
-          ? "Envoi en cours…"
-          : mc > 0
-            ? `✓ Valider mes ${mc} inscription${mc > 1 ? "s" : ""}`
-            : "Sélectionnez des créneaux"}
-      </button>
+      {canModify && (
+        <button
+          onClick={handleSubmit}
+          disabled={submitting}
+          style={{
+            ...btn(mc > 0, mobile),
+            opacity: submitting ? 0.5 : mc > 0 ? 1 : 0.7,
+          }}
+        >
+          {submitting
+            ? "Envoi en cours…"
+            : mc > 0
+              ? `✓ Valider mes ${mc} inscription${mc > 1 ? "s" : ""}`
+              : "Sélectionnez des créneaux"}
+        </button>
+      )}
 
       {/* Tableau des spectacles */}
       {spectacles && spectacles.length > 0 && (
