@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { C, T } from "../styles/theme";
 import PersonBar from "./PersonBar";
 
-export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, onRemove, hasTimeConflict, canRemove = true, mobile }) {
+export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, onRemove, hasTimeConflict, canRemove = true, mobile, hideStandColumn = false }) {
   const [activeTooltip, setActiveTooltip] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
 
@@ -29,24 +29,26 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
         fontFamily: T.font, tableLayout: "fixed",
       }}>
         <colgroup>
-          <col style={{ width: mobile ? 80 : 120 }} />
+          {!hideStandColumn && <col style={{ width: mobile ? 80 : 120 }} />}
           {timeslots.map((t) => <col key={t.id} />)}
         </colgroup>
         <thead>
           <tr style={{ background: T.primaryBg }}>
-            <th style={{
-              padding: mobile ? "6px 2px" : "8px 4px",
-              borderBottom: `1.5px solid ${T.border}`,
-              borderRight: `1px solid ${T.border}`,
-              background: "transparent",
-            }}>
-            </th>
-            {timeslots.map((ts) => (
+            {!hideStandColumn && (
+              <th style={{
+                padding: mobile ? "6px 2px" : "8px 4px",
+                borderBottom: `1.5px solid ${T.border}`,
+                borderRight: `1px solid ${T.border}`,
+                background: "transparent",
+              }}>
+              </th>
+            )}
+            {timeslots.map((ts, idx) => (
               <th key={ts.id} style={{
                 padding: mobile ? "6px 1px" : "8px 2px",
                 textAlign: "center", fontWeight: 800,
                 borderBottom: `1.5px solid ${T.border}`,
-                borderLeft: `1px solid ${T.border}`,
+                borderLeft: !hideStandColumn || idx > 0 ? `1px solid ${T.border}` : "none",
                 fontSize: mobile ? 12 : 14, color: T.primaryDk,
                 letterSpacing: "-0.02em",
               }}>
@@ -57,32 +59,54 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
         </thead>
         <tbody>
           {stands.map((stand, si) => (
-            <tr key={stand.id} style={{
-              borderBottom: `1px solid ${T.border}`,
-              background: si % 2 === 0 ? "#fff" : T.surfaceAlt,
-            }}>
-              <td style={{
-                padding: mobile ? "4px 2px" : "6px 3px",
-                borderRight: `1px solid ${T.border}`,
-                textAlign: "center", verticalAlign: "middle",
+            <>
+              {hideStandColumn && (
+                <tr key={`${stand.id}-label`} style={{
+                  background: si % 2 === 0 ? "#fff" : T.surfaceAlt,
+                }}>
+                  <td colSpan={timeslots.length} style={{
+                    padding: mobile ? "4px 6px" : "6px 10px",
+                    borderBottom: `1px solid ${T.border}`,
+                    fontSize: mobile ? 11 : 13,
+                    fontWeight: 800,
+                    color: "#44403C",
+                  }}>
+                    <span style={{ fontSize: mobile ? 16 : 18, marginRight: 6 }}>{stand.emoji}</span>
+                    {stand.label}
+                    <span style={{ fontSize: mobile ? 9 : 10, color: T.hint, fontWeight: 700, marginLeft: 6 }}>
+                      ({stand.capacity}p.)
+                    </span>
+                  </td>
+                </tr>
+              )}
+              <tr key={stand.id} style={{
+                borderBottom: `1px solid ${T.border}`,
+                background: si % 2 === 0 ? "#fff" : T.surfaceAlt,
               }}>
-                <div style={{ fontSize: mobile ? 16 : 20, lineHeight: 1 }}>{stand.emoji}</div>
-                <div style={{
-                  fontSize: mobile ? 8 : 11, fontWeight: 800, color: "#44403C",
-                  lineHeight: 1.15, marginTop: 1,
-                  overflow: "hidden",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-                }}>
-                  {stand.label}
-                </div>
-                <div style={{
-                  fontSize: mobile ? 7 : 8, color: T.hint, fontWeight: 700, marginTop: 1,
-                }}>
-                  {stand.capacity}p.
-                </div>
-              </td>
-              {timeslots.map((ts) => {
+                {!hideStandColumn && (
+                  <td style={{
+                    padding: mobile ? "4px 2px" : "6px 3px",
+                    borderRight: `1px solid ${T.border}`,
+                    textAlign: "center", verticalAlign: "middle",
+                  }}>
+                    <div style={{ fontSize: mobile ? 16 : 20, lineHeight: 1 }}>{stand.emoji}</div>
+                    <div style={{
+                      fontSize: mobile ? 8 : 11, fontWeight: 800, color: "#44403C",
+                      lineHeight: 1.15, marginTop: 1,
+                      overflow: "hidden",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                    }}>
+                      {stand.label}
+                    </div>
+                    <div style={{
+                      fontSize: mobile ? 7 : 8, color: T.hint, fontWeight: 700, marginTop: 1,
+                    }}>
+                      {stand.capacity}p.
+                    </div>
+                  </td>
+                )}
+                {timeslots.map((ts, idx) => {
                 const list = getList(stand.id, ts.id);
                 const mine = isMine(stand.id, ts.id);
                 const conflict = !mine && hasConflict(ts.id);
@@ -93,7 +117,7 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
                 return (
                   <td key={ts.id} style={{
                     padding: mobile ? "3px 2px" : "4px 3px",
-                    borderLeft: `1px solid ${T.border}`,
+                    borderLeft: !hideStandColumn || idx > 0 ? `1px solid ${T.border}` : "none",
                     verticalAlign: "top",
                     background: mine ? C.me.glow : "transparent",
                     transition: "background .25s",
@@ -169,7 +193,8 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
                   </td>
                 );
               })}
-            </tr>
+              </tr>
+            </>
           ))}
         </tbody>
       </table>

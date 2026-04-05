@@ -125,7 +125,7 @@ export default function App() {
   return (
     <div style={{
       fontFamily: T.font, color: T.text,
-      maxWidth: 900, margin: "0 auto",
+      maxWidth: 1200, margin: "0 auto",
       padding: mobile ? "0 4px 80px" : "0 8px 60px",
     }}>
       <Header cfg={cfg} view={view} setView={setView} />

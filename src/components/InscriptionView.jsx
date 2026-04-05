@@ -418,6 +418,7 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
             hasTimeConflict={hasTimeConflictWithSlot}
             canRemove={canRemove}
             mobile={mobile}
+            hideStandColumn={true}
           />
         </>
       )}
