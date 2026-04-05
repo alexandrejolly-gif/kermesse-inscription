@@ -29,16 +29,26 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
         fontFamily: T.font, tableLayout: "fixed",
       }}>
         <colgroup>
+          <col style={{ width: mobile ? 80 : 120 }} />
           {timeslots.map((t) => <col key={t.id} />)}
         </colgroup>
         <thead>
           <tr style={{ background: T.primaryBg }}>
-            {timeslots.map((ts, idx) => (
+            <th style={{
+              padding: mobile ? "6px 2px" : "8px 4px",
+              textAlign: "center", fontWeight: 800,
+              borderBottom: `1.5px solid ${T.border}`,
+              borderRight: `1px solid ${T.border}`,
+              fontSize: mobile ? 9 : 10, color: T.muted,
+            }}>
+              Stand
+            </th>
+            {timeslots.map((ts) => (
               <th key={ts.id} style={{
                 padding: mobile ? "6px 1px" : "8px 2px",
                 textAlign: "center", fontWeight: 800,
                 borderBottom: `1.5px solid ${T.border}`,
-                borderLeft: idx > 0 ? `1px solid ${T.border}` : "none",
+                borderLeft: `1px solid ${T.border}`,
                 fontSize: mobile ? 12 : 14, color: T.primaryDk,
                 letterSpacing: "-0.02em",
               }}>
