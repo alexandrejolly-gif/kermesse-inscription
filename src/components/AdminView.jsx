@@ -243,16 +243,16 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
 
       const headers = ["STAND", ...normalTimeslots.map(t => t.label.toUpperCase())];
       const rows = normalStands.map(stand => {
-        const row = [stand.label];
+        const row = [`${stand.label} (${stand.capacity}p.)`]; // Avec nb de places
         normalTimeslots.forEach(slot => {
           const inscs = inscriptions.filter(i => i.stand_id === stand.id && i.slot_id === slot.id);
-          const names = inscs.map(i => i.name).join("\n"); // Un par ligne
+          const names = inscs.map(i => i.name).join("\n");
           row.push(names || "-");
         });
         return row;
       });
 
-      const standColWidth = 38; // Largeur pour ~20 caractères
+      const standColWidth = 42; // Largeur pour label + capacité
       const slotColWidth = (availableWidth - standColWidth) / normalTimeslots.length;
 
       autoTable(doc, {
@@ -299,16 +299,16 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
 
       const headers = ["STAND", ...securiteTimeslots.map(t => t.label.toUpperCase())];
       const rows = securiteStands.map(stand => {
-        const row = [stand.label];
+        const row = [`${stand.label} (${stand.capacity}p.)`]; // Avec nb de places
         securiteTimeslots.forEach(slot => {
           const inscs = inscriptions.filter(i => i.stand_id === stand.id && i.slot_id === slot.id);
-          const names = inscs.map(i => i.name).join("\n"); // Un par ligne
+          const names = inscs.map(i => i.name).join("\n");
           row.push(names || "-");
         });
         return row;
       });
 
-      const standColWidth = 28; // Plus petit pour Sécurité
+      const standColWidth = 32; // Ajusté pour label + capacité
       const slotColWidth = (availableWidth - standColWidth) / securiteTimeslots.length;
 
       autoTable(doc, {
