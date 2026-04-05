@@ -59,27 +59,7 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
         </thead>
         <tbody>
           {stands.map((stand, si) => (
-            <>
-              {hideStandColumn && (
-                <tr key={`${stand.id}-label`} style={{
-                  background: si % 2 === 0 ? "#fff" : T.surfaceAlt,
-                }}>
-                  <td colSpan={timeslots.length} style={{
-                    padding: mobile ? "4px 6px" : "6px 10px",
-                    borderBottom: `1px solid ${T.border}`,
-                    fontSize: mobile ? 11 : 13,
-                    fontWeight: 800,
-                    color: "#44403C",
-                  }}>
-                    <span style={{ fontSize: mobile ? 16 : 18, marginRight: 6 }}>{stand.emoji}</span>
-                    {stand.label}
-                    <span style={{ fontSize: mobile ? 9 : 10, color: T.hint, fontWeight: 700, marginLeft: 6 }}>
-                      ({stand.capacity}p.)
-                    </span>
-                  </td>
-                </tr>
-              )}
-              <tr key={stand.id} style={{
+            <tr key={stand.id} style={{
                 borderBottom: `1px solid ${T.border}`,
                 background: si % 2 === 0 ? "#fff" : T.surfaceAlt,
               }}>
@@ -193,8 +173,7 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
                   </td>
                 );
               })}
-              </tr>
-            </>
+            </tr>
           ))}
         </tbody>
       </table>
