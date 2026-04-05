@@ -69,7 +69,7 @@ export default function IdentityForm({ form, setForm, errors, onEmailBlur, editi
         }}>
           {cfg?.allow_modifications
             ? "✏️ Inscriptions retrouvées - modifiez et re-soumettez."
-            : "⚠️ Inscriptions retrouvées. Les modifications sont désactivées. En cas de désistement, merci de contacter directement les organisateurs."}
+            : "⚠️ Inscriptions retrouvées. Vous pouvez ajouter de nouveaux créneaux, mais pas supprimer les anciens. Pour tout désistement, merci de contacter directement les organisateurs."}
         </p>
       )}
       {Object.values(errors).some(Boolean) && (

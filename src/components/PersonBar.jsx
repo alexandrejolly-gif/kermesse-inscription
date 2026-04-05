@@ -1,12 +1,12 @@
 import { C } from "../styles/theme";
 
-export default function PersonBar({ person, isMe, onRemove, onToggle, standId, slotId, activeTooltip, setActiveTooltip, canModify = true, mobile }) {
+export default function PersonBar({ person, isMe, onRemove, onToggle, standId, slotId, activeTooltip, setActiveTooltip, canRemove = true, mobile }) {
   const barId = `${standId}-${slotId}-${person.email}`;
   const showing = activeTooltip === barId;
 
   const handleTap = (e) => {
     e.stopPropagation();
-    if (isMe && canModify) {
+    if (isMe && canRemove) {
       onRemove(person.id, standId, slotId);
     } else if (!isMe) {
       setActiveTooltip(showing ? null : barId);
@@ -46,7 +46,7 @@ export default function PersonBar({ person, isMe, onRemove, onToggle, standId, s
           background: isMe ? C.me.bg : C.other.bg,
           display: "flex", alignItems: "center",
           padding: mobile ? "0 4px" : "0 6px", gap: 3,
-          cursor: (isMe && canModify) || !isMe ? "pointer" : "default",
+          cursor: (isMe && canRemove) || !isMe ? "pointer" : "default",
           transition: "all .15s", overflow: "hidden",
           boxShadow: isMe ? `0 0 0 1.5px ${C.me.bg}, 0 2px 6px ${C.me.glow}` : "none",
         }}
@@ -58,7 +58,7 @@ export default function PersonBar({ person, isMe, onRemove, onToggle, standId, s
         }}>
           {person.name}
         </span>
-        {isMe && canModify && <span style={{ fontSize: 7, color: "rgba(255,255,255,.6)", flexShrink: 0 }}>✕</span>}
+        {isMe && canRemove && <span style={{ fontSize: 7, color: "rgba(255,255,255,.6)", flexShrink: 0 }}>✕</span>}
       </div>
     </div>
   );
