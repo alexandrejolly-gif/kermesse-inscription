@@ -211,14 +211,14 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
     URL.revokeObjectURL(url);
   };
 
-  // ─── Export PDF
+  // ─── Export PDF (tout sur 1 page A4)
   const exportPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
-    // Titre
-    doc.setFontSize(18);
+    // Titre compact
+    doc.setFontSize(12);
     doc.setFont(undefined, "bold");
-    doc.text(cfg.title || "Kermesse", 14, 15);
+    doc.text(cfg.title || "Kermesse", 14, 10);
 
     // Séparer les stands et créneaux par type
     const normalStands = stands.filter(s => s.type !== 'securite');
@@ -226,16 +226,15 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
     const normalTimeslots = timeslots.filter(t => t.type !== 'securite');
     const securiteTimeslots = timeslots.filter(t => t.type === 'securite');
 
-    let yPos = 25;
+    let yPos = 16;
 
-    // Tableau 1 : Stands de la kermesse
+    // Tableau 1 : Stands de la kermesse (compact)
     if (normalStands.length > 0 && normalTimeslots.length > 0) {
-      doc.setFontSize(14);
+      doc.setFontSize(10);
       doc.setFont(undefined, "bold");
       doc.text("🎪 Stands de la kermesse", 14, yPos);
-      yPos += 5;
+      yPos += 4;
 
-      // Préparer les données
       const headers = ["Stand", ...normalTimeslots.map(t => t.label)];
       const rows = normalStands.map(stand => {
         const row = [`${stand.emoji} ${stand.label}`];
@@ -252,25 +251,20 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
         head: [headers],
         body: rows,
         theme: "grid",
-        styles: { fontSize: 8, cellPadding: 2, font: "helvetica" },
-        headStyles: { fillColor: [249, 115, 22], textColor: 255, fontStyle: "bold" },
-        columnStyles: { 0: { fontStyle: "bold", cellWidth: 40 } },
-        didDrawPage: (data) => { yPos = data.cursor.y + 10; }
+        styles: { fontSize: 6, cellPadding: 1, font: "helvetica", overflow: 'linebreak' },
+        headStyles: { fillColor: [249, 115, 22], textColor: 255, fontStyle: "bold", fontSize: 7 },
+        columnStyles: { 0: { fontStyle: "bold", cellWidth: 30 } },
+        margin: { left: 14, right: 14 },
+        didDrawPage: (data) => { yPos = data.cursor.y + 6; }
       });
     }
 
-    // Tableau 2 : Sécurisation
+    // Tableau 2 : Sécurisation (compact, pas de nouvelle page)
     if (securiteStands.length > 0 && securiteTimeslots.length > 0) {
-      // Nouvelle page si nécessaire
-      if (yPos > 150) {
-        doc.addPage();
-        yPos = 15;
-      }
-
-      doc.setFontSize(14);
+      doc.setFontSize(10);
       doc.setFont(undefined, "bold");
       doc.text("🔒 Sécurisation de l'accès au site", 14, yPos);
-      yPos += 5;
+      yPos += 4;
 
       const headers = ["Stand", ...securiteTimeslots.map(t => t.label)];
       const rows = securiteStands.map(stand => {
@@ -288,9 +282,10 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
         head: [headers],
         body: rows,
         theme: "grid",
-        styles: { fontSize: 8, cellPadding: 2, font: "helvetica" },
-        headStyles: { fillColor: [124, 58, 237], textColor: 255, fontStyle: "bold" },
-        columnStyles: { 0: { fontStyle: "bold", cellWidth: 40 } }
+        styles: { fontSize: 6, cellPadding: 1, font: "helvetica", overflow: 'linebreak' },
+        headStyles: { fillColor: [124, 58, 237], textColor: 255, fontStyle: "bold", fontSize: 7 },
+        columnStyles: { 0: { fontStyle: "bold", cellWidth: 30 } },
+        margin: { left: 14, right: 14 }
       });
     }
 
