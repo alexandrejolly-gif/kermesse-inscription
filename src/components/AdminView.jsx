@@ -211,14 +211,14 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
     URL.revokeObjectURL(url);
   };
 
-  // ─── Export PDF (joli et propre sur 1 page A4)
+  // ─── Export PDF (optimisé pour tenir sur 1 page A4 même plein)
   const exportPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
-    // Titre élégant
-    doc.setFontSize(16);
+    // Titre compact
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text(cfg.title || "Kermesse", 148, 12, { align: "center" });
+    doc.text(cfg.title || "Kermesse", 148, 10, { align: "center" });
 
     // Séparer les stands et créneaux par type
     const normalStands = stands.filter(s => s.type !== 'securite');
@@ -226,101 +226,117 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
     const normalTimeslots = timeslots.filter(t => t.type !== 'securite');
     const securiteTimeslots = timeslots.filter(t => t.type === 'securite');
 
-    let yPos = 20;
+    const pageWidth = 297; // A4 landscape
+    const margins = 8; // Marges réduites
+    const availableWidth = pageWidth - (2 * margins);
+
+    let yPos = 16;
 
     // Tableau 1 : Stands de la kermesse
     if (normalStands.length > 0 && normalTimeslots.length > 0) {
+      // Titre du tableau
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(249, 115, 22);
+      doc.text("STANDS DE LA KERMESSE", margins, yPos);
+      yPos += 5;
+
       const headers = ["STAND", ...normalTimeslots.map(t => t.label.toUpperCase())];
       const rows = normalStands.map(stand => {
-        const row = [stand.label]; // Sans emoji
+        const row = [stand.label];
         normalTimeslots.forEach(slot => {
           const inscs = inscriptions.filter(i => i.stand_id === stand.id && i.slot_id === slot.id);
-          const names = inscs.map(i => i.name).join(", ");
+          const names = inscs.map(i => i.name).join("\n"); // Un par ligne
           row.push(names || "-");
         });
         return row;
       });
 
-      // Calculer largeur uniforme pour les colonnes de créneaux
-      const pageWidth = 297; // A4 landscape
-      const margins = 20;
-      const availableWidth = pageWidth - (2 * margins);
-      const standColWidth = 45;
+      const standColWidth = 38; // Largeur pour ~20 caractères
       const slotColWidth = (availableWidth - standColWidth) / normalTimeslots.length;
 
       autoTable(doc, {
         startY: yPos,
         head: [headers],
         body: rows,
-        theme: "striped",
+        theme: "grid",
         styles: {
-          fontSize: 7,
-          cellPadding: 2.5,
+          fontSize: 6.5,
+          cellPadding: 1.5,
           font: "helvetica",
-          overflow: "ellipsize",
-          cellWidth: "wrap"
+          overflow: "linebreak",
+          lineColor: [220, 220, 220],
+          lineWidth: 0.1,
+          minCellHeight: 5
         },
         headStyles: {
           fillColor: [249, 115, 22],
           textColor: [255, 255, 255],
           fontStyle: "bold",
-          fontSize: 8,
-          halign: "center"
+          fontSize: 7.5,
+          halign: "center",
+          cellPadding: 2
         },
         columnStyles: {
-          0: { fontStyle: "bold", cellWidth: standColWidth, halign: "left" },
+          0: { fontStyle: "bold", cellWidth: standColWidth, halign: "left", fillColor: [255, 250, 245] },
           ...Object.fromEntries(
-            normalTimeslots.map((_, i) => [i + 1, { cellWidth: slotColWidth, halign: "center" }])
+            normalTimeslots.map((_, i) => [i + 1, { cellWidth: slotColWidth, halign: "left", valign: "top" }])
           )
         },
         margin: { left: margins, right: margins },
-        didDrawPage: (data) => { yPos = data.cursor.y + 8; }
+        didDrawPage: (data) => { yPos = data.cursor.y + 6; }
       });
     }
 
     // Tableau 2 : Sécurisation
     if (securiteStands.length > 0 && securiteTimeslots.length > 0) {
+      // Titre du tableau
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(124, 58, 237);
+      doc.text("SÉCURISATION DE L'ACCÈS AU SITE", margins, yPos);
+      yPos += 5;
+
       const headers = ["STAND", ...securiteTimeslots.map(t => t.label.toUpperCase())];
       const rows = securiteStands.map(stand => {
-        const row = [stand.label]; // Sans emoji
+        const row = [stand.label];
         securiteTimeslots.forEach(slot => {
           const inscs = inscriptions.filter(i => i.stand_id === stand.id && i.slot_id === slot.id);
-          const names = inscs.map(i => i.name).join(", ");
+          const names = inscs.map(i => i.name).join("\n"); // Un par ligne
           row.push(names || "-");
         });
         return row;
       });
 
-      // Calculer largeur uniforme pour les colonnes de créneaux
-      const pageWidth = 297;
-      const margins = 20;
-      const availableWidth = pageWidth - (2 * margins);
-      const standColWidth = 45;
+      const standColWidth = 28; // Plus petit pour Sécurité
       const slotColWidth = (availableWidth - standColWidth) / securiteTimeslots.length;
 
       autoTable(doc, {
         startY: yPos,
         head: [headers],
         body: rows,
-        theme: "striped",
+        theme: "grid",
         styles: {
-          fontSize: 7,
-          cellPadding: 2.5,
+          fontSize: 6.5,
+          cellPadding: 1.5,
           font: "helvetica",
-          overflow: "ellipsize",
-          cellWidth: "wrap"
+          overflow: "linebreak",
+          lineColor: [220, 220, 220],
+          lineWidth: 0.1,
+          minCellHeight: 5
         },
         headStyles: {
           fillColor: [124, 58, 237],
           textColor: [255, 255, 255],
           fontStyle: "bold",
-          fontSize: 8,
-          halign: "center"
+          fontSize: 7.5,
+          halign: "center",
+          cellPadding: 2
         },
         columnStyles: {
-          0: { fontStyle: "bold", cellWidth: standColWidth, halign: "left" },
+          0: { fontStyle: "bold", cellWidth: standColWidth, halign: "left", fillColor: [250, 245, 255] },
           ...Object.fromEntries(
-            securiteTimeslots.map((_, i) => [i + 1, { cellWidth: slotColWidth, halign: "center" }])
+            securiteTimeslots.map((_, i) => [i + 1, { cellWidth: slotColWidth, halign: "left", valign: "top" }])
           )
         },
         margin: { left: margins, right: margins }
