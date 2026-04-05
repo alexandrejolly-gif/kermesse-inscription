@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { T, inputBase, lbl, btn, uid, move, buildCSV, useResponsive, card } from "../styles/theme";
 import EditableItem from "./EditableItem";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const adminTabs = [
   { id: "stands", icon: "🏪", label: "Stands" },
@@ -247,7 +247,7 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
         return row;
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [headers],
         body: rows,
@@ -283,7 +283,7 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
         return row;
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [headers],
         body: rows,
