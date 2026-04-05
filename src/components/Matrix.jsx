@@ -36,12 +36,10 @@ export default function Matrix({ inscriptions, stands, timeslots, email, onAdd, 
           <tr style={{ background: T.primaryBg }}>
             <th style={{
               padding: mobile ? "6px 2px" : "8px 4px",
-              textAlign: "center", fontWeight: 800,
               borderBottom: `1.5px solid ${T.border}`,
               borderRight: `1px solid ${T.border}`,
-              fontSize: mobile ? 9 : 10, color: T.muted,
+              background: "transparent",
             }}>
-              Stand
             </th>
             {timeslots.map((ts) => (
               <th key={ts.id} style={{
