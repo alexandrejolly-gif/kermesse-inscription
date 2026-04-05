@@ -538,9 +538,9 @@ Plus d'infos sur [le site de l'école](https://...)"
               />
             </div>
             <div>
-              <label style={lbl(mobile)}>Autoriser les modifications</label>
+              <label style={lbl(mobile)}>Autoriser la suppression</label>
               <div style={{ fontSize: 10, color: T.hint, marginBottom: 6, fontFamily: T.font }}>
-                Permettre aux parents de modifier leurs inscriptions après validation
+                Permettre aux parents de supprimer leurs créneaux (l'ajout reste toujours possible)
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <button
