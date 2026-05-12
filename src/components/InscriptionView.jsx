@@ -508,28 +508,6 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
                 }}>
                   Classe
                 </th>
-                <th style={{
-                  padding: mobile ? "8px 6px" : "10px 12px",
-                  textAlign: "left",
-                  fontWeight: 700,
-                  fontSize: mobile ? 10 : 11,
-                  color: "#78716C",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                }}>
-                  Spectacle
-                </th>
-                <th style={{
-                  padding: mobile ? "8px 6px" : "10px 12px",
-                  textAlign: "center",
-                  fontWeight: 700,
-                  fontSize: mobile ? 10 : 11,
-                  color: "#78716C",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                }}>
-                  Enseignant·e
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -553,19 +531,6 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
                     textAlign: "center",
                   }}>
                     {s.classe}
-                  </td>
-                  <td style={{
-                    padding: mobile ? "8px 6px" : "10px 12px",
-                    fontWeight: 600,
-                  }}>
-                    {s.titre}
-                  </td>
-                  <td style={{
-                    padding: mobile ? "8px 6px" : "10px 12px",
-                    color: "#78716C",
-                    textAlign: "center",
-                  }}>
-                    {s.enseignant}
                   </td>
                 </tr>
               ))}

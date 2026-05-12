@@ -788,53 +788,7 @@ Plus d'infos sur [le site de l'école](https://...)"
                   }
                   placeholder="PS"
                   style={{
-                    width: mobile ? 40 : 50,
-                    padding: mobile ? "5px 6px" : "6px 8px",
-                    borderRadius: 6,
-                    border: `1px solid ${T.border}`,
-                    fontSize: mobile ? 11 : 12,
-                    fontWeight: 600,
-                    fontFamily: T.font,
-                    background: "#fff",
-                    outline: "none",
-                  }}
-                />
-
-                {/* Spectacle */}
-                <input
-                  type="text"
-                  value={s.titre}
-                  onChange={(e) =>
-                    setLocalSpectacles((prev) =>
-                      prev.map((x) => (x.id === s.id ? { ...x, titre: e.target.value } : x))
-                    )
-                  }
-                  placeholder="Les petits poissons"
-                  style={{
                     flex: 1,
-                    padding: mobile ? "5px 6px" : "6px 8px",
-                    borderRadius: 6,
-                    border: `1px solid ${T.border}`,
-                    fontSize: mobile ? 11 : 12,
-                    fontWeight: 600,
-                    fontFamily: T.font,
-                    background: "#fff",
-                    outline: "none",
-                  }}
-                />
-
-                {/* Enseignant */}
-                <input
-                  type="text"
-                  value={s.enseignant}
-                  onChange={(e) =>
-                    setLocalSpectacles((prev) =>
-                      prev.map((x) => (x.id === s.id ? { ...x, enseignant: e.target.value } : x))
-                    )
-                  }
-                  placeholder="Mme Dupont"
-                  style={{
-                    width: mobile ? 70 : 100,
                     padding: mobile ? "5px 6px" : "6px 8px",
                     borderRadius: 6,
                     border: `1px solid ${T.border}`,
