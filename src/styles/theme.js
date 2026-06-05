@@ -194,7 +194,7 @@ export function buildCSV(stands, timeslots, inscriptions) {
   const sep = ";";
 
   const slotCols = timeslots.map((t) => t.label);
-  const header = ["Nom", "Email", "Téléphone", "Date inscription", ...slotCols].join(sep);
+  const header = ["Nom", "Email", "Téléphone", "Enfant", "Date inscription", ...slotCols].join(sep);
 
   // Group inscriptions by email
   const byEmail = {};
@@ -207,6 +207,7 @@ export function buildCSV(stands, timeslots, inscriptions) {
     const first = list[0];
     const name = first.name || "";
     const phone = first.phone || "";
+    const child = first.child_class || "";
     const date = first.created_at
       ? new Date(first.created_at).toLocaleDateString("fr-FR", {
           day: "2-digit", month: "2-digit", year: "numeric",
@@ -221,7 +222,7 @@ export function buildCSV(stands, timeslots, inscriptions) {
       return stand ? `${stand.emoji} ${stand.label}` : "";
     });
 
-    return [name, email, phone, date, ...slotValues].join(sep);
+    return [name, email, phone, child, date, ...slotValues].join(sep);
   });
 
   return BOM + header + "\n" + rows.join("\n");

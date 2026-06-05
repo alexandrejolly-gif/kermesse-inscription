@@ -7,7 +7,7 @@ import MyRecap from "./MyRecap";
 
 export default function InscriptionView({ stands, timeslots, spectacles, inscriptions, cfg, showToast, onRefresh }) {
   const { mobile } = useResponsive();
-  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
+  const [form, setForm] = useState({ parentName: "", childClass: "", email: "", phone: "" });
   const [errors, setErrors] = useState({});
   const [editingHint, setEditingHint] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -31,11 +31,10 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
     }
     const existing = inscriptions.find((i) => i.email.toLowerCase() === currentEmail);
     if (existing) {
-      const parts = existing.name.split(" ");
       setForm((f) => ({
         ...f,
-        firstName: parts[0] || "",
-        lastName: parts.slice(1).join(" ") || "",
+        parentName: existing.name || "",
+        childClass: existing.child_class || "",
         phone: existing.phone || f.phone,
       }));
       setEditingHint(true);
@@ -161,8 +160,8 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
   // Add inscription to local cart
   const handleAdd = useCallback((standId, slotId) => {
     // Vérifier que tous les champs obligatoires sont remplis
-    if (!form.firstName.trim() || !form.lastName.trim() || !currentEmail || !form.phone.trim()) {
-      showToast("❌ Remplissez tous les champs (prénom, nom, email, téléphone)");
+    if (!form.parentName.trim() || !form.childClass.trim() || !currentEmail || !form.phone.trim()) {
+      showToast("❌ Remplissez tous les champs (parent, enfant, email, téléphone)");
       return;
     }
     if (!isEmail(currentEmail)) {
@@ -182,7 +181,7 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
     }
     // La vérification de conflit est gérée visuellement dans Matrix (pas de message d'erreur)
 
-    const name = `${form.firstName.trim()} ${form.lastName.trim()}`;
+    const name = form.parentName.trim();
     const slot = timeslots.find((t) => t.id === slotId);
 
     // Ajouter au panier local
@@ -191,6 +190,7 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
       email: currentEmail,
       name,
       phone: form.phone || "",
+      child_class: form.childClass.trim(),
       stand_id: standId,
       slot_id: slotId,
     };
@@ -217,8 +217,8 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
   // Submit / Validate - save to Supabase
   const handleSubmit = async () => {
     const e = {};
-    if (!form.firstName.trim()) e.firstName = true;
-    if (!form.lastName.trim()) e.lastName = true;
+    if (!form.parentName.trim()) e.parentName = true;
+    if (!form.childClass.trim()) e.childClass = true;
     if (!currentEmail || !isEmail(currentEmail)) e.email = true;
     if (!form.phone.trim() || !isPhone(form.phone)) e.phone = true;
     setErrors(e);
@@ -240,12 +240,13 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
       await supabase.rpc('delete_inscriptions_by_email', { user_email: currentEmail });
 
       // Insérer toutes les inscriptions du panier (dédupliquées par slot_id)
-      const name = `${form.firstName.trim()} ${form.lastName.trim()}`;
+      const name = form.parentName.trim();
       const toInsert = localCart.map(i => ({
         id: uid(),
         email: currentEmail,
         name,
         phone: form.phone || "",
+        child_class: form.childClass.trim(),
         stand_id: i.stand_id,
         slot_id: i.slot_id,
       }));
@@ -284,7 +285,7 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: currentEmail,
-            firstName: form.firstName.trim(),
+            parentName: form.parentName.trim(),
             inscriptions: myInscriptions,
             siteTitle: cfg.title,
           }),
@@ -324,7 +325,7 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
         <button
           onClick={() => {
             setSubmitted(false);
-            setForm({ firstName: "", lastName: "", email: "", phone: "" });
+            setForm({ parentName: "", childClass: "", email: "", phone: "" });
             setErrors({});
             setEditingHint(false);
             setLocalCart([]);
@@ -349,7 +350,6 @@ export default function InscriptionView({ stands, timeslots, spectacles, inscrip
         errors={errors}
         onEmailBlur={handleEmailBlur}
         editingHint={editingHint}
-        mobile={mobile}
         cfg={cfg}
       />
 

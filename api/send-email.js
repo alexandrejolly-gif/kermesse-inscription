@@ -1,11 +1,14 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
-  const { email, firstName, inscriptions, siteTitle } = req.body;
+  const { email, parentName, inscriptions, siteTitle } = req.body;
 
   if (!email || !inscriptions || !inscriptions.length) {
     return res.status(400).json({ error: "Missing email or inscriptions" });
   }
+
+  // Extraire le prénom du parent pour la salutation
+  const firstName = parentName ? parentName.split(" ")[0] : "";
 
   const rows = inscriptions
     .map(

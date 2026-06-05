@@ -1,6 +1,9 @@
-import { inputBase, lbl, T } from "../styles/theme";
+import { inputBase, lbl, T, useResponsive } from "../styles/theme";
 
-export default function IdentityForm({ form, setForm, errors, onEmailBlur, editingHint, mobile, cfg }) {
+export default function IdentityForm({ form, setForm, errors, onEmailBlur, editingHint, cfg }) {
+  const { mobile, width } = useResponsive();
+  const isWide = width > 900; // 4 colonnes seulement si > 900px
+
   const iStyle = (field) => ({
     ...inputBase(mobile),
     borderColor: errors[field] ? "#FCA5A5" : T.border,
@@ -15,25 +18,25 @@ export default function IdentityForm({ form, setForm, errors, onEmailBlur, editi
     }}>
       <div style={{
         display: "grid",
-        gridTemplateColumns: mobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr",
+        gridTemplateColumns: isWide ? "1fr 1fr 1fr 1fr" : "1fr 1fr",
         gap: mobile ? "8px 8px" : "8px 12px",
       }}>
         <div>
-          <label style={lbl(mobile)}>Prénom *</label>
+          <label style={lbl(mobile)}>Prénom Nom *</label>
           <input
-            value={form.firstName}
-            placeholder="Marie"
-            onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-            style={iStyle("firstName")}
+            value={form.parentName}
+            placeholder="Marie Dupont"
+            onChange={(e) => setForm((f) => ({ ...f, parentName: e.target.value }))}
+            style={iStyle("parentName")}
           />
         </div>
         <div>
-          <label style={lbl(mobile)}>Nom *</label>
+          <label style={lbl(mobile)}>Enfant Classe *</label>
           <input
-            value={form.lastName}
-            placeholder="Dupont"
-            onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
-            style={iStyle("lastName")}
+            value={form.childClass}
+            placeholder="Emma Dupont GS"
+            onChange={(e) => setForm((f) => ({ ...f, childClass: e.target.value }))}
+            style={iStyle("childClass")}
           />
         </div>
         <div>
@@ -48,13 +51,13 @@ export default function IdentityForm({ form, setForm, errors, onEmailBlur, editi
           />
         </div>
         <div>
-          <label style={lbl(mobile)}>Téléphone</label>
+          <label style={lbl(mobile)}>Téléphone *</label>
           <input
             value={form.phone}
             placeholder="06 12 34 56 78"
             type="tel"
             onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-            style={inputBase(mobile)}
+            style={iStyle("phone")}
           />
         </div>
       </div>

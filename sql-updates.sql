@@ -20,3 +20,6 @@ ALTER TABLE ins_spectacles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public read spectacles" ON ins_spectacles;
 CREATE POLICY "Public read spectacles" ON ins_spectacles FOR SELECT USING (true);
+
+-- Ajouter le champ child_class à ins_inscriptions
+ALTER TABLE ins_inscriptions ADD COLUMN IF NOT EXISTS child_class TEXT DEFAULT NULL;

@@ -246,7 +246,11 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
         const row = [`${stand.label} (${stand.capacity}p.)`]; // Avec nb de places
         normalTimeslots.forEach(slot => {
           const inscs = inscriptions.filter(i => i.stand_id === stand.id && i.slot_id === slot.id);
-          const names = inscs.map(i => i.name).join("\n");
+          const names = inscs.map(i => {
+            const displayName = i.name;
+            const child = i.child_class ? `\n(${i.child_class})` : "";
+            return displayName + child;
+          }).join("\n");
           row.push(names || "-");
         });
         return row;
@@ -302,7 +306,11 @@ export default function AdminView({ cfg, stands, timeslots, spectacles, inscript
         const row = [`${stand.label} (${stand.capacity}p.)`]; // Avec nb de places
         securiteTimeslots.forEach(slot => {
           const inscs = inscriptions.filter(i => i.stand_id === stand.id && i.slot_id === slot.id);
-          const names = inscs.map(i => i.name).join("\n");
+          const names = inscs.map(i => {
+            const displayName = i.name;
+            const child = i.child_class ? `\n(${i.child_class})` : "";
+            return displayName + child;
+          }).join("\n");
           row.push(names || "-");
         });
         return row;
@@ -917,6 +925,11 @@ Plus d'infos sur [le site de l'école](https://...)"
                       <div style={{ fontWeight: 800, fontSize: 13, color: T.text, fontFamily: T.font }}>
                         {first.name}
                       </div>
+                      {first.child_class && (
+                        <div style={{ fontSize: 11, color: "#7C3AED", fontWeight: 600, fontFamily: T.font }}>
+                          Enfant : {first.child_class}
+                        </div>
+                      )}
                       <div style={{ fontSize: 11, color: T.muted, fontFamily: T.font }}>
                         {email} {first.phone ? `· ${first.phone}` : ""}
                       </div>
